@@ -1,26 +1,25 @@
-use std::error::Error;
 use std::fmt;
+use ws;
 
 #[derive(Debug)]
-pub struct StringError {
-    what: String
+pub enum Error {
+    SocketError(ws::Error),
+    // Custom
+    StringError(String),
 }
 
-impl StringError {
-    pub fn new(msg: &str) -> StringError {
-        let msg_owned = msg.to_string().clone();
-        StringError { what: msg_owned }
-    }
-}
-
-impl Error for StringError {
-    fn description(&self) -> &str {
-        self.what.as_str()
-    }
-}
-
-impl fmt::Display for StringError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no: {}", self.what)
+        let err_msg = match *self {
+            Error::SocketError(ref err) => err.to_string(),
+            Error::StringError(ref err) => err.clone(),
+        };
+        write!(f, "Oh no: {}", err_msg)
+    }
+}
+
+impl From<ws::Error> for Error {
+    fn from(err: ws::Error) -> Self {
+        Error::SocketError(err)
     }
 }

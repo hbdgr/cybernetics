@@ -1,4 +1,3 @@
-use std::io;
 use std::fmt;
 use sodiumoxide::crypto;
 use std::collections::HashMap;
@@ -8,12 +7,11 @@ use std::fs::File;
 use person::{ Person, create_person };
 
 use bincode;
-use serde::ser::{ Serialize, Serializer, SerializeMap };
-// use serde::de::{ Deserialize, Deserializer };
 
 use utils::{ to_hex_string };
 
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AccountsStorage {
 	accounts: HashMap<crypto::hash::Digest, Person>
 }
@@ -30,21 +28,21 @@ impl AccountsStorage {
 		&self.accounts.insert(hash_key, person);
 	}
 */
-	pub fn save_to_file(&self) -> io::Result<()> {
+	pub fn save_to_file(&self) -> Result<(), bincode::Error> {
 		let mut file = File::create("storage.dat")?;
 
-		let serialized = bincode::serialize_into(&mut file, &self).unwrap();
-
-		println!("Serialized?: {:?}", &serialized);
+		bincode::serialize_into(&mut file, &self)?;
 		Ok(())
 	}
 
-	pub fn load_from_file(&self) -> io::Result<()> {
+	pub fn load_from_file() -> Result<AccountsStorage, bincode::Error> {
 		let mut file = File::open("storage.dat")?;
 
-		// let decoded: AccountsStorage = bincode::deserialize_from(&mut file).unwrap();
-		// self = &decoded;
-		Ok(())
+		// let mut decoded: AccountsStorage = bincode::deserialize_from(&mut file).unwrap();
+		// self = &mut decoded;
+		let decoded: AccountsStorage = bincode::deserialize_from(&mut file)?;
+		println!("Deserialized acc {:?}", decoded);
+		Ok(decoded)
 	}
 
 	pub fn new_person(&mut self, password: &str, person_name: &str) {
@@ -61,9 +59,19 @@ impl AccountsStorage {
 	}
 }
 
-pub fn create_storage(capacity: usize) -> AccountsStorage {
-	let storage = AccountsStorage { accounts: HashMap::with_capacity(capacity) };
-	storage.load_from_file();
+pub fn restore_storage(capacity: usize) -> AccountsStorage {
+	let storage: AccountsStorage;
+	match AccountsStorage::load_from_file() {
+		Ok(value) => {
+			storage = value;
+			println!("Loaded storage from file!");
+		},
+		Err(err) => {
+			storage = AccountsStorage { accounts: HashMap::with_capacity(capacity) };
+			println!("Fail to load storage from file {:?}", err);
+			println!("Returinig empty storage...");
+		}
+	}
 	storage
 }
 
@@ -80,29 +88,3 @@ impl fmt::Display for AccountsStorage {
 		write!(f, "Accounts ({}):\n{}", self.accounts.len(), my_accounts_info)
 	}
 }
-
-impl Serialize for AccountsStorage {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
-		let mut map = serializer.serialize_map(Some(self.accounts.len()))?;
-		for (k, v) in &self.accounts {
-			map.serialize_entry(k.as_ref(), &v)?;
-		}
-		map.end()
-	}
-}
-
-/*
-impl<'de> Deserialize<'de> for AccountsStorage {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: Deserializer<'de>,
-	{
-		let storage = create_storage(1);
-		storage.accounts = deserializer.deserialize_map()?;
-		Ok(storage)
-	}
-}
-*/

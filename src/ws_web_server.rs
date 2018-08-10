@@ -3,9 +3,9 @@ use serde_json;
 use ws;
 use ws::{ listen, CloseCode, Handler, Message, Handshake, Sender};
 
-use accounts_storage::{ AccountsStorage, create_storage };
+use accounts_storage::{ AccountsStorage, restore_storage };
 
-use error::StringError;
+use error::Error;
 
 fn parse_json_cmd(data: &str) -> Result<serde_json::Value, String> {
 	// Parse the string of data into serde_json::Value.
@@ -17,24 +17,25 @@ fn parse_json_cmd(data: &str) -> Result<serde_json::Value, String> {
 	}
 }
 
-// return key value if ok, otherwise sending error message
 // require string values
-fn require_json_key(json: &serde_json::Value, key: &str, error_out: &Sender) -> Result<String, StringError> {
-	let key_value: Option<String>;
-	if json[key].is_string() {
-		let value = json[key].as_str().unwrap();
-		key_value = Some(<String>::from(value));
-	}
-	else {
-		key_value = None;
-	}
-
-	match key_value {
-		Some(value) => Ok(value),
+fn require_json_key(json: &serde_json::Value, key: &str) -> Result<String, Error> {
+	match json[key].as_str() {
+		Some(value) => Ok(value.to_owned()),
 		None => {
 			let err_msg = format!("key {:?} as string is required!", key);
-			error_out.send(err_msg.clone()).unwrap();
-			Err(StringError::new(&err_msg))
+			Err(Error::StringError(err_msg))
+		}
+	}
+}
+
+fn handle_cmd_field(json: &serde_json::Value, key: &str, error_out: &Sender) -> Result<String, Error> {
+	match require_json_key(json, key) {
+		Ok(value) => Ok(value),
+		Err(str_err) => {
+			match error_out.send(str_err.to_string()) {
+				Ok(()) => Err(str_err),
+				Err(ws_err) => Err(Error::SocketError(ws_err))
+			}
 		}
 	}
 }
@@ -72,12 +73,11 @@ pub fn create_web_server(url: &str) -> ws::Result<()> {
 						let cmd = cmd.as_str().unwrap();
 						match cmd {
 							"create_account" => {
-								println!("Got AA!");
 								let name;
 								let pass;
-								if let Ok(name_value) = require_json_key(&value, "name", &self.out) {
+								if let Ok(name_value) = handle_cmd_field(&value, "name", &self.out) {
 									name = name_value;
-									if let Ok(pass_value) = require_json_key(&value, "password", &self.out) {
+									if let Ok(pass_value) = handle_cmd_field(&value, "password", &self.out) {
 										pass = pass_value;
 										println!("cmd: {:?}, name: {:?}, pass: {:?}", cmd, name, pass);
 										self.main_storage.new_person(&pass, &name);
@@ -115,7 +115,7 @@ pub fn create_web_server(url: &str) -> ws::Result<()> {
 
 	// create accounts storage
 	// returning Server listener
-	return listen(url, |out| Server { out, main_storage: create_storage(10) });
+	return listen(url, |out| Server { out, main_storage: restore_storage(10) });
 }
 
 /*	EXAMPLE WITH ERROR HANDLING
