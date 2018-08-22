@@ -1,19 +1,19 @@
 use std::fmt;
 use sodiumoxide::crypto;
 use std::collections::HashMap;
+use bincode;
 
 use std::fs::File;
 
 use person::{ Person, create_person };
-
-use bincode;
+use crypto::{ pubkey_to_str };
 
 use utils::{ to_hex_string };
 
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountsStorage {
-	accounts: HashMap<crypto::hash::Digest, Person>
+	accounts: HashMap<crypto::hash::Digest, Person>,
 }
 
 impl AccountsStorage {
@@ -28,15 +28,19 @@ impl AccountsStorage {
 		&self.accounts.insert(hash_key, person);
 	}
 */
+	fn filename() -> &'static str {
+		"storage.dat"
+	}
+
 	pub fn save_to_file(&self) -> Result<(), bincode::Error> {
-		let mut file = File::create("storage.dat")?;
+		let mut file = File::create(AccountsStorage::filename())?;
 
 		bincode::serialize_into(&mut file, &self)?;
 		Ok(())
 	}
 
 	pub fn load_from_file() -> Result<AccountsStorage, bincode::Error> {
-		let mut file = File::open("storage.dat")?;
+		let mut file = File::open(AccountsStorage::filename())?;
 
 		// let mut decoded: AccountsStorage = bincode::deserialize_from(&mut file).unwrap();
 		// self = &mut decoded;
@@ -46,9 +50,10 @@ impl AccountsStorage {
 	}
 
 	pub fn new_person(&mut self, password: &str, person_name: &str) {
-		let person = create_person(&person_name);
+		let person = create_person(&person_name, &password);
+		let pubkey_hex: String = pubkey_to_str(person.get_pubkey());
 
-		let hash_key = AccountsStorage::create_mixed_hashkey(password, person_name);
+		let hash_key = AccountsStorage::create_mixed_hashkey(password, pubkey_hex.as_str());
 		&self.accounts.insert(hash_key, person);
 
 		&self.save_to_file();

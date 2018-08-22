@@ -11,7 +11,7 @@ extern crate bincode;
 
 
 mod person;
-mod key_pair;
+mod crypto;
 mod accounts_storage;
 mod msg_block;
 mod ws_web_server;
@@ -32,13 +32,14 @@ fn main() {
 	let first_struct = msg_block::build_msg_block("author", "example message");
 	println!("MessageBlock: {}", first_struct);
 
-	let example_person = person::create_person("Amelino");
+	let example_pass = "very_hard_to_breake_password";
+	let example_person = person::create_person("Amelino", example_pass);
 	println!("First user name: {}", example_person.get_name());
 
 	let msg_to_sign = "example message to sign";
 
-	let signature = example_person.sign_msg(msg_to_sign);
-	assert!(example_person.verify(msg_to_sign, &signature));
+	let signature = example_person.sign_msg(msg_to_sign, example_pass).unwrap();
+	example_person.verify(msg_to_sign, &signature).unwrap();
 
 	let _ = server_thread.join();
 }
