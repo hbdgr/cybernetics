@@ -1,6 +1,6 @@
 [package]
-name = "chains_tree"
-version = "0.1.0"
+name = "cybernetics"
+version = "0.1.1"
 authors = ["hbdgr <hbdgr@protonmail.com>"]
 
 [dependencies]
