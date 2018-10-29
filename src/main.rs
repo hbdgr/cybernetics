@@ -1,4 +1,4 @@
-#![feature(plugin, decl_macro, custom_derive)]
+#![feature(plugin, decl_macro, custom_derive, extern_prelude)]
 #![plugin(rocket_codegen)]
 
 // mute warnings, couse by compiler, should be fixed in rustc 1.4
@@ -21,6 +21,7 @@ extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate rocket;
 extern crate rocket_contrib;
+extern crate rocket_cors;
 
 
 mod person;
