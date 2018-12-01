@@ -1,4 +1,4 @@
-#![feature(plugin, decl_macro, custom_derive, extern_prelude)]
+#![feature(plugin, decl_macro, custom_derive)]
 #![plugin(rocket_codegen)]
 
 // mute warnings, couse by compiler, should be fixed in rustc 1.4

@@ -8,10 +8,10 @@ pub struct Object {
 	pub content: String,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Queryable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "objects"]
 pub struct InsertableObject {
-	content: String,
+	pub content: String,
 }
 
 impl InsertableObject {

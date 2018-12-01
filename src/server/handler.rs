@@ -1,8 +1,11 @@
 use database::connection_pool::DbConn;
 use diesel::result::Error;
 use std::env;
+
 use database::object_queries;
 use database::object::Object;
+use database::object::InsertableObject;
+
 use rocket::http::Status;
 use rocket::response::{Failure, status};
 use rocket_contrib::Json;
@@ -48,7 +51,8 @@ fn get(id: i32, connection: DbConn) -> Result<Json<Object>, Failure> {
 }
 
 #[post("/", format = "application/json", data = "<object>")]
-fn post(object: Json<Object>, connection: DbConn) -> Result<status::Created<Json<Object>>, Failure> {
+fn post(object: Json<InsertableObject>, connection: DbConn) -> Result<status::Created<Json<Object>>, Failure> {
+
 	object_queries::insert(object.into_inner(), &connection)
 		.map(|object| object_created(object))
 		.map_err(|error| error_status(error))

@@ -13,9 +13,9 @@ pub fn get(id: i32, connection: &PgConnection) -> QueryResult<Object> {
 }
 
 // TODO avoid duplications
-pub fn insert(object: Object, connection: &PgConnection) -> QueryResult<Object> {
+pub fn insert(object: InsertableObject, connection: &PgConnection) -> QueryResult<Object> {
 	diesel::insert_into(objects::table)
-		.values(&InsertableObject::from_object(object))
+		.values(&object)
 		.get_result(connection)
 }
 
