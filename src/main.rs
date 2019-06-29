@@ -1,5 +1,4 @@
-#![feature(plugin, decl_macro, custom_derive)]
-#![plugin(rocket_codegen)]
+#![feature(plugin, decl_macro, proc_macro_hygiene)]
 
 // mute warnings, couse by compiler, should be fixed in rustc 1.4
 // https://github.com/diesel-rs/diesel/issues/1785
@@ -19,6 +18,8 @@ extern crate diesel;
 extern crate dotenv;
 extern crate r2d2;
 extern crate r2d2_diesel;
+
+#[macro_use]
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate rocket_cors;

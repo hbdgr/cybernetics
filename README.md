@@ -26,8 +26,16 @@ postgres=# ALTER ROLE patrick CREATEDB;
 
 ## .env file
 
+Required variables:
+- ROCKET_ADDRESS
+- ROCKET_PORT
+- DATABASE_URL
+
+Example:
 ```
-echo DATABASE_URL=postgres://username:password@localhost/cybernetics > .env
+ROCKET_ADDRESS=localhost
+ROCKET_PORT=8080
+DATABASE_URL=postgres://username:password@localhost/cybernetics
 ```
 
 ## Diesel
