@@ -1,6 +1,7 @@
 use server::handler;
 use database::connection_pool;
 
+use rocket::fairing::AdHoc;
 use rocket::http::Method;
 use rocket_cors::{AllowedOrigins, AllowedHeaders};
 
@@ -54,5 +55,14 @@ pub fn create_routes() {
             ],
         )
         .attach(cors_options())
+        .attach(AdHoc::on_request("Post Request", |req, data| {
+            if req.method() == Method::Post {
+                if data.peek_complete() {
+                    let s = String::from_utf8(data.peek().to_vec())
+                        .expect("Found invalid UTF-8");
+                    println!("    => Request: DATA {}", s);
+                }
+            }
+        }))
         .launch();
 }
