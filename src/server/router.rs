@@ -12,7 +12,11 @@ use rocket_cors::{AllowedOrigins, AllowedHeaders};
 // }
 
 fn cors_options() -> rocket_cors::Cors {
-    let (allowed_origins, failed_origins) = AllowedOrigins::some(&["http://localhost:8080"]);
+    let port_allowed = 65320;
+    let host_allowed = format!("http://localhost:{}", port_allowed.to_string());
+    println!("CORS: Host allowed to connect: {}", host_allowed);
+
+    let (allowed_origins, failed_origins) = AllowedOrigins::some(&[&host_allowed]);
     assert!(failed_origins.is_empty());
 
     // You can also deserialize this
