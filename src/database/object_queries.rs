@@ -12,7 +12,7 @@ pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
         let obj = match Object::from_queryable_object(ins) {
             Ok(obj) => obj,
             Err(err) => {
-                println!("handler [all]: Bad formated object [{:?}]: {:?}", id, err);
+                error!("[query - all]: Bad formated object [{:?}]: {:?}", id, err);
                 continue;
             }
         };
