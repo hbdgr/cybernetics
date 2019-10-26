@@ -1,4 +1,4 @@
 CREATE TABLE objects (
-	id serial NOT NULL PRIMARY KEY,
-	object json NOT NULL
+	id BIGSERIAL PRIMARY KEY,
+	content JSON NOT NULL
 )

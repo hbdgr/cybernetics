@@ -1,10 +1,9 @@
-use server::handler;
 use database::connection_pool;
+use server::handler;
 
 use rocket::fairing::AdHoc;
 use rocket::http::Method;
-use rocket_cors::{AllowedOrigins, AllowedHeaders};
-
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
 // #[options("/")]
 // fn cors<'a>() -> &'a str {
@@ -22,10 +21,16 @@ fn cors_options() -> rocket_cors::Cors {
     // You can also deserialize this
     rocket_cors::Cors {
         allowed_origins: allowed_origins,
-        allowed_methods: vec![Method::Get, Method::Post, Method::Put, Method::Delete, Method::Options]
-            .into_iter()
-            .map(From::from)
-            .collect(),
+        allowed_methods: vec![
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Delete,
+            Method::Options,
+        ]
+        .into_iter()
+        .map(From::from)
+        .collect(),
         allowed_headers: AllowedHeaders::all(),
         // allowed_methods: vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
         // allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
@@ -38,16 +43,8 @@ pub fn create_routes() {
     rocket::ignite()
         .manage(connection_pool::init_pool())
         .manage(cors_options())
-        .mount(
-            "/",
-            rocket_cors::catch_all_options_routes()
-        )
-        .mount(
-            "/",
-            routes![
-                handler::auth_post
-            ],
-        )
+        .mount("/", rocket_cors::catch_all_options_routes())
+        .mount("/", routes![handler::auth_post])
         .mount(
             "/objects",
             routes![
@@ -62,8 +59,7 @@ pub fn create_routes() {
         .attach(AdHoc::on_request("Post Request", |req, data| {
             if req.method() == Method::Post {
                 if data.peek_complete() {
-                    let s = String::from_utf8(data.peek().to_vec())
-                        .expect("Found invalid UTF-8");
+                    let s = String::from_utf8(data.peek().to_vec()).expect("Found invalid UTF-8");
                     println!("    => Request: DATA {}", s);
                 }
             }

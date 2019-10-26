@@ -2,14 +2,13 @@ use database::connection_pool::DbConn;
 use diesel::result::Error;
 use std::env;
 
-use database::object_queries;
-use database::object::Object;
 use database::object::InsertableObject;
+use database::object::Object;
+use database::object_queries;
 
 use rocket::http::Status;
 use rocket::response::status;
 use rocket_contrib::json::Json;
-
 
 #[get("/")]
 pub fn all(connection: DbConn) -> Result<Json<Vec<Object>>, Status> {
@@ -21,7 +20,7 @@ pub fn all(connection: DbConn) -> Result<Json<Vec<Object>>, Status> {
 fn error_status(error: Error) -> Status {
     match error {
         Error::NotFound => Status::NotFound,
-        _ => Status::InternalServerError
+        _ => Status::InternalServerError,
     }
 }
 /*
@@ -34,7 +33,7 @@ fn auth_post() -> status::NoContent {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthData {
     key: String,
-    password: String
+    password: String,
 }
 
 #[post("/auth", format = "application/json", data = "<auth_data>")]
@@ -44,15 +43,17 @@ pub fn auth_post(auth_data: Json<AuthData>) -> Status {
 }
 
 #[get("/<id>")]
-pub fn get(id: i32, connection: DbConn) -> Result<Json<Object>, Status> {
+pub fn get(id: i64, connection: DbConn) -> Result<Json<Object>, Status> {
     object_queries::get(id, &connection)
         .map(|object| Json(object))
         .map_err(|error| error_status(error))
 }
 
 #[post("/", format = "application/json", data = "<object>")]
-pub fn post(object: Json<InsertableObject>, connection: DbConn) -> Result<status::Created<Json<Object>>, Status> {
-
+pub fn post(
+    object: Json<InsertableObject>,
+    connection: DbConn,
+) -> Result<status::Created<Json<Object>>, Status> {
     object_queries::insert(object.into_inner(), &connection)
         .map(|object| object_created(object))
         .map_err(|error| error_status(error))
@@ -63,23 +64,30 @@ pub fn object_created(object: Object) -> status::Created<Json<Object>> {
     let port = env::var("ROCKET_PORT").expect("ROCKET_PORT must be set");
 
     status::Created(
-        format!("{host}:{port}/objects/{id}", host = host, port = port, id = object.id).to_string(),
-        Some(Json(object)))
+        format!(
+            "{host}:{port}/objects/{id}",
+            host = host,
+            port = port,
+            id = object.id
+        )
+        .to_string(),
+        Some(Json(object)),
+    )
 }
 
 #[put("/<id>", format = "application/json", data = "<object>")]
-pub fn put(id: i32, object: Json<Object>, connection: DbConn) -> Result<Json<Object>, Status> {
+pub fn put(id: i64, object: Json<Object>, connection: DbConn) -> Result<Json<Object>, Status> {
     object_queries::update(id, object.into_inner(), &connection)
         .map(|object| Json(object))
         .map_err(|error| error_status(error))
 }
 
 #[delete("/<id>")]
-pub fn delete(id: i32, connection: DbConn) -> Result<Status, Status> {
+pub fn delete(id: i64, connection: DbConn) -> Result<Status, Status> {
     match object_queries::get(id, &connection) {
         Ok(_) => object_queries::delete(id, &connection)
             .map(|_| Status::NoContent)
             .map_err(|error| error_status(error)),
-        Err(error) => Err(error_status(error))
+        Err(error) => Err(error_status(error)),
     }
 }

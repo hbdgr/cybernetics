@@ -1,6 +1,6 @@
 table! {
-	objects (id) {
-		id -> Int4,
-		object -> Json,
-	}
+    objects (id) {
+        id -> Int8,
+        content -> Json,
+    }
 }
