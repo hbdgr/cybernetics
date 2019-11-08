@@ -32,6 +32,7 @@ mod database;
 mod error;
 mod msg_block;
 mod person;
+mod primitives;
 mod server;
 mod utils;
 mod ws_web_server;

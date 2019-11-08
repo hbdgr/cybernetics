@@ -3,8 +3,8 @@ use diesel::result::Error;
 use std::env;
 
 use database::object::InsertableObject;
-use database::object::Object;
 use database::object_queries;
+use primitives::object::Object;
 
 use rocket::http::Status;
 use rocket::response::status;

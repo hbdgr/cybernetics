@@ -1,7 +1,8 @@
-use database::object::{InsertableObject, Object, QueryableObject};
+use database::object::{InsertableObject, QueryableObject};
 use database::schema::objects;
 use diesel;
 use diesel::prelude::*;
+use primitives::object::Object;
 
 pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
     let queryable_vec = objects::table.load::<QueryableObject>(&*connection)?;
