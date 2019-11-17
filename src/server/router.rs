@@ -3,6 +3,7 @@ use server::handler;
 
 use rocket::fairing::AdHoc;
 use rocket::http::Method;
+use rocket::Rocket;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
 // #[options("/")]
@@ -39,7 +40,7 @@ fn cors_options() -> rocket_cors::Cors {
     }
 }
 
-pub fn create_routes() {
+pub fn create_routes() -> Rocket {
     rocket::ignite()
         .manage(connection_pool::init_pool())
         .manage(cors_options())
@@ -64,5 +65,8 @@ pub fn create_routes() {
                 }
             }
         }))
-        .launch();
+}
+
+pub fn launch_routes() {
+    create_routes().launch();
 }

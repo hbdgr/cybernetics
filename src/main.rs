@@ -46,7 +46,7 @@ fn main() {
     dotenv().ok();
     // run rest server!
 
-    let rest_thread = thread::spawn(move || server::router::create_routes());
+    let rest_thread = thread::spawn(move || server::router::launch_routes());
     println!("REST API created");
 
     // run ws server!
