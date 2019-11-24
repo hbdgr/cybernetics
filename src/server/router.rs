@@ -1,5 +1,5 @@
 use database::connection_pool;
-use server::handler;
+use server::handle_objects;
 
 use rocket::fairing::AdHoc;
 use rocket::http::Method;
@@ -45,15 +45,15 @@ pub fn create_routes() -> Rocket {
         .manage(connection_pool::init_pool())
         .manage(cors_options())
         .mount("/", rocket_cors::catch_all_options_routes())
-        .mount("/", routes![handler::auth_post])
+        .mount("/", routes![handle_objects::auth_post])
         .mount(
             "/objects",
             routes![
-                handler::all,
-                handler::get,
-                handler::post,
-                handler::put,
-                handler::delete,
+                handle_objects::all,
+                handle_objects::get,
+                handle_objects::post,
+                handle_objects::put,
+                handle_objects::delete,
             ],
         )
         .attach(cors_options())
