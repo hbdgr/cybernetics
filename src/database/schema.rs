@@ -8,7 +8,7 @@ table! {
 table! {
     relations (id) {
         id -> Int8,
-        relation_object_id -> Int8,
+        object_definition_id -> Int8,
         first_object_id -> Int8,
         second_object_id -> Int8,
     }
