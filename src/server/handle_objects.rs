@@ -1,5 +1,4 @@
 use database::connection_pool::DbConn;
-use diesel::result::Error;
 use std::env;
 
 use database::object::InsertableObject;
@@ -10,6 +9,8 @@ use rocket::http::Status;
 use rocket::response::status;
 use rocket_contrib::json::Json;
 
+use server::router::error_status;
+
 #[get("/")]
 pub fn all(connection: DbConn) -> Result<Json<Vec<Object>>, Status> {
     object_queries::all(&connection)
@@ -17,12 +18,6 @@ pub fn all(connection: DbConn) -> Result<Json<Vec<Object>>, Status> {
         .map_err(|error| error_status(error))
 }
 
-fn error_status(error: Error) -> Status {
-    match error {
-        Error::NotFound => Status::NotFound,
-        _ => Status::InternalServerError,
-    }
-}
 /*
 #[options("/auth", format = "text/html")]
 fn auth_post() -> status::NoContent {
@@ -59,22 +54,6 @@ pub fn post(
         .map_err(|error| error_status(error))
 }
 
-pub fn object_created(object: Object) -> status::Created<Json<Object>> {
-    let host = env::var("ROCKET_ADDRESS").expect("ROCKET_ADDRESS must be set");
-    let port = env::var("ROCKET_PORT").expect("ROCKET_PORT must be set");
-
-    status::Created(
-        format!(
-            "{host}:{port}/objects/{id}",
-            host = host,
-            port = port,
-            id = object.id
-        )
-        .to_string(),
-        Some(Json(object)),
-    )
-}
-
 #[put("/<id>", format = "application/json", data = "<object>")]
 pub fn put(id: i64, object: Json<Object>, connection: DbConn) -> Result<Json<Object>, Status> {
     object_queries::update(id, object.into_inner(), &connection)
@@ -90,4 +69,20 @@ pub fn delete(id: i64, connection: DbConn) -> Result<Status, Status> {
             .map_err(|error| error_status(error)),
         Err(error) => Err(error_status(error)),
     }
+}
+
+pub fn object_created(object: Object) -> status::Created<Json<Object>> {
+    let host = env::var("ROCKET_ADDRESS").expect("ROCKET_ADDRESS must be set");
+    let port = env::var("ROCKET_PORT").expect("ROCKET_PORT must be set");
+
+    status::Created(
+        format!(
+            "{host}:{port}/objects/{id}",
+            host = host,
+            port = port,
+            id = object.id
+        )
+        .to_string(),
+        Some(Json(object)),
+    )
 }

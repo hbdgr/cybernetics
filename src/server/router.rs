@@ -1,8 +1,10 @@
 use database::connection_pool;
+use diesel::result::Error;
 use server::handle_objects;
+use server::handle_relations;
 
 use rocket::fairing::AdHoc;
-use rocket::http::Method;
+use rocket::http::{Method, Status};
 use rocket::Rocket;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
@@ -56,6 +58,7 @@ pub fn create_routes() -> Rocket {
                 handle_objects::delete,
             ],
         )
+        .mount("/relations", routes![handle_relations::post])
         .attach(cors_options())
         .attach(AdHoc::on_request("Post Request", |req, data| {
             if req.method() == Method::Post {
@@ -69,4 +72,11 @@ pub fn create_routes() -> Rocket {
 
 pub fn launch_routes() {
     create_routes().launch();
+}
+
+pub fn error_status(error: Error) -> Status {
+    match error {
+        Error::NotFound => Status::NotFound,
+        _ => Status::InternalServerError,
+    }
 }

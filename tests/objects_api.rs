@@ -1,4 +1,3 @@
-extern crate cybernetics;
 extern crate rocket;
 extern crate serde_json;
 
