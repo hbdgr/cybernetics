@@ -35,3 +35,16 @@ pub fn create_test_object(body_str: &str) -> i64 {
     assert_eq!(response.status(), Status::Created);
     response_body_id(response.body_string())
 }
+
+#[allow(dead_code)]
+pub fn create_test_relation(body_str: &str) -> i64 {
+    let client = rocket_client();
+    let mut response = client
+        .post("/relations")
+        .body(body_str)
+        .header(ContentType::JSON)
+        .dispatch();
+
+    assert_eq!(response.status(), Status::Created);
+    response_body_id(response.body_string())
+}

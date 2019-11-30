@@ -58,7 +58,15 @@ pub fn create_routes() -> Rocket {
                 handle_objects::delete,
             ],
         )
-        .mount("/relations", routes![handle_relations::post])
+        .mount(
+            "/relations",
+            routes![
+                handle_relations::all,
+                handle_relations::post,
+                handle_relations::get,
+                handle_relations::delete
+            ],
+        )
         .attach(cors_options())
         .attach(AdHoc::on_request("Post Request", |req, data| {
             if req.method() == Method::Post {
