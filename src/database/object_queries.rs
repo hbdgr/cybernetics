@@ -40,11 +40,9 @@ pub fn insert(object: InsertableObject, connection: &PgConnection) -> QueryResul
     Ok(obj)
 }
 
-pub fn update(id: i64, object: Object, connection: &PgConnection) -> QueryResult<Object> {
-    let insertable = InsertableObject::from_object(object);
-
-    let queryable = diesel::update(objects::table.find(id))
-        .set(&insertable)
+pub fn update(object: QueryableObject, connection: &PgConnection) -> QueryResult<Object> {
+    let queryable = diesel::update(objects::table.find(object.id))
+        .set(&object)
         .get_result(connection)?;
 
     let obj = Object::from_queryable_object(queryable).unwrap();

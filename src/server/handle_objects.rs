@@ -1,7 +1,7 @@
 use database::connection_pool::DbConn;
 use std::env;
 
-use database::object::InsertableObject;
+use database::object::{InsertableObject, QueryableObject};
 use database::object_queries;
 use primitives::object::Object;
 
@@ -55,8 +55,14 @@ pub fn post(
 }
 
 #[put("/<id>", format = "application/json", data = "<object>")]
-pub fn put(id: i64, object: Json<Object>, connection: DbConn) -> Result<Json<Object>, Status> {
-    object_queries::update(id, object.into_inner(), &connection)
+pub fn put(
+    id: i64,
+    object: Json<InsertableObject>,
+    connection: DbConn,
+) -> Result<Json<Object>, Status> {
+    let queryable = QueryableObject::from_insertable_object(id, object.into_inner());
+
+    object_queries::update(queryable, &connection)
         .map(|object| Json(object))
         .map_err(|error| error_status(error))
 }

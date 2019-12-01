@@ -21,6 +21,13 @@ impl QueryableObject {
             content: object_json,
         }
     }
+
+    pub fn from_insertable_object(id: i64, object: InsertableObject) -> QueryableObject {
+        QueryableObject {
+            id: id,
+            content: object.content,
+        }
+    }
 }
 
 #[derive(Insertable, AsChangeset, Serialize, Deserialize)]

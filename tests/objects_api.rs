@@ -61,6 +61,26 @@ fn get_all() {
 }
 
 #[test]
+fn put_object() {
+    let created_obj_id = create_test_object("obj1");
+    let new_body = r#"{"content":{"header":"header","body":"new_better.."}}"#;
+
+    let client = rocket_client();
+    let mut response = client
+        .put(format!("/objects/{}", created_obj_id))
+        .body(&new_body)
+        .header(ContentType::JSON)
+        .dispatch();
+
+    assert_eq!(response.status(), Status::Ok);
+
+    let json_response: serde_json::Value =
+        serde_json::from_str(&response.body_string().unwrap()).unwrap();
+
+    assert_eq!(json_response.get("body").unwrap(), "new_better..");
+}
+
+#[test]
 fn delete_objcet() {
     let body_str = "obj_to_delete";
     let created_obj_id = create_test_object(body_str);
