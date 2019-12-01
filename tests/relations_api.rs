@@ -96,6 +96,36 @@ fn get_all_relations() {
 }
 
 #[test]
+fn put_relation() {
+    let obj_def_id = create_test_object("definition");
+    let obj_first_id = create_test_object("first object");
+    let obj_second_id = create_test_object("second object");
+
+    let mut obj_body = relation_body(obj_def_id, obj_first_id, obj_second_id);
+    let relation_id = create_test_relation(&obj_body);
+
+    let new_obj_def_id = create_test_object("new_definition");
+    obj_body = relation_body(new_obj_def_id, obj_first_id, obj_second_id);
+
+    let client = rocket_client();
+    let mut response = client
+        .put(format!("/relations/{}", relation_id))
+        .body(obj_body)
+        .header(ContentType::JSON)
+        .dispatch();
+
+    assert_eq!(response.status(), Status::Ok);
+
+    let json_response: serde_json::Value =
+        serde_json::from_str(&response.body_string().unwrap()).unwrap();
+
+    assert_eq!(
+        json_response.get("object_definition_id").unwrap(),
+        new_obj_def_id
+    );
+}
+
+#[test]
 fn delete_relation() {
     let obj_body = create_test_relation_body("D");
     let relation_id = create_test_relation(&obj_body);

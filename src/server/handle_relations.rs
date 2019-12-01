@@ -36,6 +36,19 @@ pub fn relation_created(relation: Relation) -> status::Created<Json<Relation>> {
     )
 }
 
+#[put("/<id>", format = "application/json", data = "<insertable>")]
+pub fn put(
+    id: i64,
+    insertable: Json<InsertableRelation>,
+    connection: DbConn,
+) -> Result<Json<Relation>, Status> {
+    let relation = Relation::from_insertable_object(id, insertable.into_inner());
+
+    relation_queries::update(relation, &connection)
+        .map(|relation| Json(relation))
+        .map_err(|error| error_status(error))
+}
+
 #[get("/<id>")]
 pub fn get(id: i64, connection: DbConn) -> Result<Json<Relation>, Status> {
     relation_queries::get(id, &connection)

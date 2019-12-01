@@ -64,6 +64,7 @@ pub fn create_routes() -> Rocket {
                 handle_relations::all,
                 handle_relations::post,
                 handle_relations::get,
+                handle_relations::put,
                 handle_relations::delete
             ],
         )

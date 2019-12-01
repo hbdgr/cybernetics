@@ -9,6 +9,17 @@ pub struct Relation {
     pub second_object_id: i64,
 }
 
+impl Relation {
+    pub fn from_insertable_object(id: i64, insertable: InsertableRelation) -> Relation {
+        Relation {
+            id: id,
+            object_definition_id: insertable.object_definition_id,
+            first_object_id: insertable.first_object_id,
+            second_object_id: insertable.second_object_id,
+        }
+    }
+}
+
 #[derive(Insertable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "relations"]
 pub struct InsertableRelation {

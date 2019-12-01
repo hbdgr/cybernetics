@@ -23,11 +23,9 @@ pub fn insert(relation: InsertableRelation, connection: &PgConnection) -> QueryR
     Ok(rel)
 }
 
-pub fn update(id: i64, relation: Relation, connection: &PgConnection) -> QueryResult<Relation> {
-    let insertable = InsertableRelation::from_relation(relation);
-
-    let rel = diesel::update(relations::table.find(id))
-        .set(&insertable)
+pub fn update(relation: Relation, connection: &PgConnection) -> QueryResult<Relation> {
+    let rel = diesel::update(relations::table.find(relation.id))
+        .set(&relation)
         .get_result(connection)?;
 
     Ok(rel)
