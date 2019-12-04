@@ -26,12 +26,9 @@ extern crate rocket_cors;
 extern crate log;
 
 mod accounts_storage;
-mod crypto;
+pub mod crypto;
 mod database;
 mod error;
-pub mod msg_block;
-pub mod person;
 mod primitives;
 pub mod server;
-mod utils;
 mod ws_web_server;
