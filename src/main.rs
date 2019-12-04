@@ -2,6 +2,7 @@
 // mute warnings, couse by compiler, should be fixed in rustc 1.4
 // https://github.com/diesel-rs/diesel/issues/1785
 #![allow(proc_macro_derive_resolution_fallback)]
+#![allow(dead_code)]
 
 extern crate serde;
 extern crate sodiumoxide;
@@ -44,8 +45,8 @@ use dotenv::dotenv;
 
 fn main() {
     dotenv().ok();
-    // run rest server!
 
+    // run rest server!
     let rest_thread = thread::spawn(move || server::router::launch_routes());
     println!("REST API created");
 
@@ -55,18 +56,6 @@ fn main() {
 
     // Give the servers a little time to get going
     thread::sleep(Duration::from_millis(10));
-
-    let first_struct = msg_block::build_msg_block("author", "example message");
-    println!("MessageBlock: {}", first_struct);
-
-    let example_pass = "very_hard_to_breake_password";
-    let example_person = person::create_person("Amelino", example_pass);
-    println!("First user name: {}", example_person.get_name());
-
-    let msg_to_sign = "example message to sign";
-
-    let signature = example_person.sign_msg(msg_to_sign, example_pass).unwrap();
-    example_person.verify(msg_to_sign, &signature).unwrap();
 
     let _ = rest_thread.join();
     let _ = ws_server_thread.join();
