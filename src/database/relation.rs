@@ -1,3 +1,4 @@
+use crypto::hash;
 use database::schema::relations;
 
 #[derive(Queryable, AsChangeset, Serialize, Deserialize, Debug)]
@@ -35,5 +36,21 @@ impl InsertableRelation {
             first_object_id: relation.first_object_id,
             second_object_id: relation.second_object_id,
         }
+    }
+
+    pub fn hash(&self) -> Result<Vec<u8>, ()> {
+        let mut hasher = hash::generic_state()?;
+        hasher.update(&self.object_definition_id.to_be_bytes())?;
+
+        // make a hash independent of the order of first and second objects
+        if self.first_object_id > self.second_object_id {
+            hasher.update(&self.first_object_id.to_be_bytes())?;
+            hasher.update(&self.second_object_id.to_be_bytes())?;
+        } else {
+            hasher.update(&self.second_object_id.to_be_bytes())?;
+            hasher.update(&self.first_object_id.to_be_bytes())?;
+        }
+
+        Ok(hash::generic_finalize(hasher)?)
     }
 }

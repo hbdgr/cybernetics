@@ -3,6 +3,7 @@ extern crate serde_json;
 
 use cybernetics::crypto::{hash, msg_block, person, string};
 use cybernetics::database::object::InsertableObject;
+use cybernetics::database::relation::InsertableRelation;
 use serde_json::json;
 
 #[test]
@@ -77,4 +78,25 @@ fn object_hash() {
     };
 
     assert_eq!(expected, string::to_hex_string(&obj2.hash().unwrap()));
+}
+
+#[test]
+fn relation_hash() {
+    let expected = "5559b74da15c1125ea3244a1ed284e2609f9d034bd11a9fe5f35769a3c0a2b1d";
+
+    let rel = InsertableRelation {
+        object_definition_id: 1,
+        first_object_id: 2,
+        second_object_id: 3,
+    };
+
+    assert_eq!(expected, string::to_hex_string(&rel.hash().unwrap()));
+
+    let rel2 = InsertableRelation {
+        object_definition_id: 1,
+        first_object_id: 3,
+        second_object_id: 2,
+    };
+
+    assert_eq!(expected, string::to_hex_string(&rel2.hash().unwrap()));
 }
