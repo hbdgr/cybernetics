@@ -1,5 +1,7 @@
+use crypto::hash;
 use database::schema::objects;
 use primitives::object::Object;
+use serde_json;
 use serde_json::json;
 
 #[derive(Queryable, AsChangeset, Serialize, Deserialize, Debug)]
@@ -46,5 +48,11 @@ impl InsertableObject {
         InsertableObject {
             content: object_json,
         }
+    }
+
+    pub fn hash(&self) -> Result<Vec<u8>, ()> {
+        let bytes = serde_json::to_vec(&self.content).unwrap();
+        let hash = hash::raw_generic(&bytes)?;
+        Ok(hash)
     }
 }

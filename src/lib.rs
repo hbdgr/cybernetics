@@ -27,7 +27,7 @@ extern crate log;
 
 mod accounts_storage;
 pub mod crypto;
-mod database;
+pub mod database;
 mod error;
 mod primitives;
 pub mod server;

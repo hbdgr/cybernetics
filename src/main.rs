@@ -42,6 +42,7 @@ use dotenv::dotenv;
 
 fn main() {
     dotenv().ok();
+    crypto::init();
 
     // run rest server!
     let rest_thread = thread::spawn(move || server::router::launch_routes());
