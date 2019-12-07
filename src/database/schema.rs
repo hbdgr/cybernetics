@@ -1,6 +1,6 @@
 table! {
-    objects (id) {
-        id -> Int8,
+    objects (hash) {
+        hash -> Bytea,
         content -> Json,
     }
 }

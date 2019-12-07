@@ -21,7 +21,7 @@ or manually:
 ``` sql
 psql postgres
 postgres=# CREATE ROLE username WITH LOGIN PASSWORD 'password' [OPTIONS]
-postgres=# ALTER ROLE patrick CREATEDB; 
+postgres=# ALTER ROLE patrick CREATEDB;
 ```
 
 ## .env file

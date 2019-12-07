@@ -3,8 +3,13 @@
 set -e
 cd "$(dirname "$0")/../"
 
+if [ -z ${DATABASE_PASSWORD+x} ]; then
+	echo "required env DATABASE_PASSWORD is unset, exiting.."
+	exit 1
+fi
+
 DATABASE_NAME="cybernetics_test"
-export DATABASE_URL="postgres://cyber:cyber@localhost/${DATABASE_NAME}"
+export DATABASE_URL="postgres://cyber:${DATABASE_PASSWORD}@localhost/${DATABASE_NAME}"
 
 arg=$1
 case $arg in
