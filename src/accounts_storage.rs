@@ -6,7 +6,7 @@ use std::fmt;
 use std::fs::File;
 
 use crypto::person::{create_person, Person};
-use crypto::string::{pubkey_to_string, to_hex_string};
+use crypto::strings::{pubkey_to_string, to_hex_string};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountsStorage {

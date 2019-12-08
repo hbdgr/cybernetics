@@ -1,7 +1,7 @@
 pub mod hash;
 pub mod msg_block;
 pub mod person;
-pub mod string;
+pub mod strings;
 
 mod personal_keys;
 

@@ -5,7 +5,7 @@ use bincode;
 use sodiumoxide::crypto::pwhash;
 use sodiumoxide::crypto::secretbox;
 
-use crypto::string::to_hex_string;
+use crypto::strings::to_hex_string;
 use error::Error;
 
 #[derive(Serialize, Deserialize, Debug)]

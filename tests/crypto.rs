@@ -1,7 +1,7 @@
 extern crate cybernetics;
 extern crate serde_json;
 
-use cybernetics::crypto::{hash, msg_block, person, string};
+use cybernetics::crypto::{hash, msg_block, person, strings};
 use cybernetics::database::object::InsertableObject;
 use cybernetics::database::relation::InsertableRelation;
 use serde_json::json;
@@ -30,7 +30,7 @@ fn generic_hash() {
 
     assert_eq!(
         "8d22328f614a98ea2e8555fc122eb0f79e04c0f1e9050952c4f59dca5da3040e",
-        string::to_hex_string(&hash)
+        strings::to_hex_string(&hash)
     );
 
     let bytes = "!@#@$@#$!@#!@cecdjbq12".to_owned();
@@ -38,7 +38,7 @@ fn generic_hash() {
 
     assert_eq!(
         "cc2e8f56b943427eaf3be124825385c750ecc9d00dfeae1ea98bc1b4b81da346",
-        string::to_hex_string(&hash)
+        strings::to_hex_string(&hash)
     );
 }
 
@@ -60,7 +60,7 @@ fn object_hash() {
         }),
     };
 
-    assert_eq!(expected, string::to_hex_string(&obj.hash().unwrap()));
+    assert_eq!(expected, strings::to_hex_string(&obj.hash().unwrap()));
 
     // same json, but different order
     let obj2 = InsertableObject {
@@ -77,7 +77,7 @@ fn object_hash() {
         }),
     };
 
-    assert_eq!(expected, string::to_hex_string(&obj2.hash().unwrap()));
+    assert_eq!(expected, strings::to_hex_string(&obj2.hash().unwrap()));
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn relation_hash() {
         second_object_id: 3,
     };
 
-    assert_eq!(expected, string::to_hex_string(&rel.hash().unwrap()));
+    assert_eq!(expected, strings::to_hex_string(&rel.hash().unwrap()));
 
     let rel2 = InsertableRelation {
         object_definition_id: 1,
@@ -98,5 +98,5 @@ fn relation_hash() {
         second_object_id: 2,
     };
 
-    assert_eq!(expected, string::to_hex_string(&rel2.hash().unwrap()));
+    assert_eq!(expected, strings::to_hex_string(&rel2.hash().unwrap()));
 }
