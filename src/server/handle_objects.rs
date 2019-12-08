@@ -1,6 +1,7 @@
 use database::connection_pool::DbConn;
 use std::env;
 
+use crypto::hash::GenericHash;
 use database::object::{InsertableObject, QueryableObject};
 use database::object_queries;
 use primitives::object::Object;
@@ -38,8 +39,8 @@ pub fn auth_post(auth_data: Json<AuthData>) -> Status {
 }
 
 #[get("/<id>")]
-pub fn get(id: i64, connection: DbConn) -> Result<Json<Object>, Status> {
-    object_queries::get(id, &connection)
+pub fn get(id: String, connection: DbConn) -> Result<Json<Object>, Status> {
+    object_queries::get(GenericHash::from_hex(&id), &connection)
         .map(|object| Json(object))
         .map_err(|error| error_status(error))
 }
@@ -54,23 +55,26 @@ pub fn post(
         .map_err(|error| error_status(error))
 }
 
+// put object with hash id means create new and delete previous
 #[put("/<id>", format = "application/json", data = "<object>")]
 pub fn put(
-    id: i64,
+    id: String,
     object: Json<InsertableObject>,
     connection: DbConn,
 ) -> Result<Json<Object>, Status> {
-    let queryable = QueryableObject::from_insertable_object(id, object.into_inner());
+    let queryable =
+        QueryableObject::from_insertable_object(GenericHash::from_hex(&id), object.into_inner());
 
     object_queries::update(queryable, &connection)
         .map(|object| Json(object))
         .map_err(|error| error_status(error))
 }
 
+// real delete is possible only for not published objects
 #[delete("/<id>")]
-pub fn delete(id: i64, connection: DbConn) -> Result<Status, Status> {
-    match object_queries::get(id, &connection) {
-        Ok(_) => object_queries::delete(id, &connection)
+pub fn delete(id: String, connection: DbConn) -> Result<Status, Status> {
+    match object_queries::get(GenericHash::from_hex(&id), &connection) {
+        Ok(_) => object_queries::delete(GenericHash::from_hex(&id), &connection)
             .map(|_| Status::NoContent)
             .map_err(|error| error_status(error)),
         Err(error) => Err(error_status(error)),
@@ -86,7 +90,7 @@ pub fn object_created(object: Object) -> status::Created<Json<Object>> {
             "{host}:{port}/objects/{id}",
             host = host,
             port = port,
-            id = object.id
+            id = object.id,
         )
         .to_string(),
         Some(Json(object)),

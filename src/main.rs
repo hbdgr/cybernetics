@@ -4,6 +4,7 @@
 #![allow(proc_macro_derive_resolution_fallback)]
 #![allow(dead_code)]
 
+extern crate hex;
 extern crate serde;
 extern crate sodiumoxide;
 extern crate ws;

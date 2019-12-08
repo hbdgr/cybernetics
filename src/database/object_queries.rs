@@ -1,15 +1,17 @@
+use crypto::hash::GenericHash;
+use primitives::object::Object;
+
 use database::object::{InsertableObject, QueryableObject};
 use database::schema::objects;
 use diesel;
 use diesel::prelude::*;
-use primitives::object::Object;
 
 pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
     let queryable_vec = objects::table.load::<QueryableObject>(&*connection)?;
 
     let mut vec = Vec::new();
     for ins in queryable_vec {
-        let id = ins.id;
+        let id = ins.id.clone();
         let obj = match Object::from_queryable_object(ins) {
             Ok(obj) => obj,
             Err(err) => {
@@ -22,9 +24,9 @@ pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
     Ok(vec)
 }
 
-pub fn get(id: i64, connection: &PgConnection) -> QueryResult<Object> {
+pub fn get(id: GenericHash, connection: &PgConnection) -> QueryResult<Object> {
     let queryable = objects::table
-        .find(id)
+        .find(&id.to_vec())
         .get_result::<QueryableObject>(connection)?;
 
     let obj = Object::from_queryable_object(queryable).unwrap();
@@ -41,7 +43,7 @@ pub fn insert(object: InsertableObject, connection: &PgConnection) -> QueryResul
 }
 
 pub fn update(object: QueryableObject, connection: &PgConnection) -> QueryResult<Object> {
-    let queryable = diesel::update(objects::table.find(object.id))
+    let queryable = diesel::update(objects::table.find(object.id.to_vec()))
         .set(&object)
         .get_result(connection)?;
 
@@ -49,6 +51,6 @@ pub fn update(object: QueryableObject, connection: &PgConnection) -> QueryResult
     Ok(obj)
 }
 
-pub fn delete(id: i64, connection: &PgConnection) -> QueryResult<usize> {
-    diesel::delete(objects::table.find(id)).execute(connection)
+pub fn delete(id: GenericHash, connection: &PgConnection) -> QueryResult<usize> {
+    diesel::delete(objects::table.find(id.to_vec())).execute(connection)
 }

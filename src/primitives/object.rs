@@ -1,9 +1,10 @@
+use crypto::hash::GenericHash;
 use database::object::{InsertableObject, QueryableObject};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Object {
     #[serde(skip_deserializing)]
-    pub id: i64,
+    pub id: GenericHash,
     pub header: String,
     pub body: String,
 }
@@ -24,7 +25,7 @@ impl Object {
         };
 
         // id was skipped with serde attribute
-        obj.id = queryable_object.id;
+        obj.id = GenericHash::from_bytes(&queryable_object.id);
         Ok(obj)
     }
 }
