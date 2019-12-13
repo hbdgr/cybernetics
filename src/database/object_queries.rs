@@ -1,18 +1,18 @@
 use crypto::hash::GenericHash;
 use primitives::object::Object;
 
-use database::object::{InsertableObject, QueryableObject};
+use database::object::DatabaseObject;
 use database::schema::objects;
 use diesel;
 use diesel::prelude::*;
 
 pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
-    let queryable_vec = objects::table.load::<QueryableObject>(&*connection)?;
+    let return_vec = objects::table.load::<DatabaseObject>(&*connection)?;
 
     let mut vec = Vec::new();
-    for ins in queryable_vec {
-        let id = ins.id.clone();
-        let obj = match Object::from_queryable_object(ins) {
+    for ins in return_vec {
+        let id = ins.hash.clone();
+        let obj = match Object::from_database_object(ins) {
             Ok(obj) => obj,
             Err(err) => {
                 error!("[query - all]: Bad formated object [{:?}]: {:?}", id, err);
@@ -25,29 +25,20 @@ pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
 }
 
 pub fn get(id: GenericHash, connection: &PgConnection) -> QueryResult<Object> {
-    let queryable = objects::table
+    let return_object: DatabaseObject = objects::table
         .find(&id.to_vec())
-        .get_result::<QueryableObject>(connection)?;
+        .get_result::<DatabaseObject>(connection)?;
 
-    let obj = Object::from_queryable_object(queryable).unwrap();
+    let obj = Object::from_database_object(return_object).unwrap();
     Ok(obj)
 }
 
-pub fn insert(object: InsertableObject, connection: &PgConnection) -> QueryResult<Object> {
-    let queryable = diesel::insert_into(objects::table)
+pub fn insert(object: DatabaseObject, connection: &PgConnection) -> QueryResult<Object> {
+    let return_object: DatabaseObject = diesel::insert_into(objects::table)
         .values(&object)
         .get_result(connection)?;
 
-    let obj = Object::from_queryable_object(queryable).unwrap();
-    Ok(obj)
-}
-
-pub fn update(object: QueryableObject, connection: &PgConnection) -> QueryResult<Object> {
-    let queryable = diesel::update(objects::table.find(object.id.to_vec()))
-        .set(&object)
-        .get_result(connection)?;
-
-    let obj = Object::from_queryable_object(queryable).unwrap();
+    let obj = Object::from_database_object(return_object).unwrap();
     Ok(obj)
 }
 

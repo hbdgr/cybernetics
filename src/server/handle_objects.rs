@@ -2,9 +2,9 @@ use database::connection_pool::DbConn;
 use std::env;
 
 use crypto::hash::GenericHash;
-use database::object::{InsertableObject, QueryableObject};
+use database::object::DatabaseObject;
 use database::object_queries;
-use primitives::object::Object;
+use primitives::object::{Content, Object};
 
 use rocket::http::Status;
 use rocket::response::status;
@@ -38,43 +38,53 @@ pub fn auth_post(auth_data: Json<AuthData>) -> Status {
     Status::NoContent
 }
 
-#[get("/<id>")]
-pub fn get(id: String, connection: DbConn) -> Result<Json<Object>, Status> {
-    object_queries::get(GenericHash::from_hex(&id), &connection)
+#[get("/<hash>")]
+pub fn get(hash: String, connection: DbConn) -> Result<Json<Object>, Status> {
+    object_queries::get(GenericHash::from_hex(&hash), &connection)
         .map(|object| Json(object))
         .map_err(|error| error_status(error))
 }
 
-#[post("/", format = "application/json", data = "<object>")]
+#[post("/", format = "application/json", data = "<content>")]
 pub fn post(
-    object: Json<InsertableObject>,
+    content: Json<Content>,
     connection: DbConn,
 ) -> Result<status::Created<Json<Object>>, Status> {
-    object_queries::insert(object.into_inner(), &connection)
-        .map(|object| object_created(object))
-        .map_err(|error| error_status(error))
+    object_queries::insert(
+        DatabaseObject::from_content(content.into_inner()),
+        &connection,
+    )
+    .map(|object| object_created(object))
+    .map_err(|error| error_status(error))
 }
 
-// put object with hash id means create new and delete previous
-#[put("/<id>", format = "application/json", data = "<object>")]
+// put object with hash means create new and delete previous
+#[put("/<hash>", format = "application/json", data = "<content>")]
 pub fn put(
-    id: String,
-    object: Json<InsertableObject>,
+    hash: String,
+    content: Json<Content>,
     connection: DbConn,
-) -> Result<Json<Object>, Status> {
-    let queryable =
-        QueryableObject::from_insertable_object(GenericHash::from_hex(&id), object.into_inner());
+) -> Result<status::Created<Json<Object>>, Status> {
+    let obj = match object_queries::insert(
+        DatabaseObject::from_content(content.into_inner()),
+        &connection,
+    ) {
+        Ok(obj) => obj,
+        Err(error) => return Err(error_status(error)),
+    };
+    match object_queries::delete(GenericHash::from_hex(&hash), &connection) {
+        Ok(s) => s,
+        Err(error) => return Err(error_status(error)),
+    };
 
-    object_queries::update(queryable, &connection)
-        .map(|object| Json(object))
-        .map_err(|error| error_status(error))
+    Ok(object_created(obj))
 }
 
 // real delete is possible only for not published objects
-#[delete("/<id>")]
-pub fn delete(id: String, connection: DbConn) -> Result<Status, Status> {
-    match object_queries::get(GenericHash::from_hex(&id), &connection) {
-        Ok(_) => object_queries::delete(GenericHash::from_hex(&id), &connection)
+#[delete("/<hash>")]
+pub fn delete(hash: String, connection: DbConn) -> Result<Status, Status> {
+    match object_queries::get(GenericHash::from_hex(&hash), &connection) {
+        Ok(_) => object_queries::delete(GenericHash::from_hex(&hash), &connection)
             .map(|_| Status::NoContent)
             .map_err(|error| error_status(error)),
         Err(error) => Err(error_status(error)),
@@ -87,10 +97,10 @@ pub fn object_created(object: Object) -> status::Created<Json<Object>> {
 
     status::Created(
         format!(
-            "{host}:{port}/objects/{id}",
+            "{host}:{port}/objects/{hash}",
             host = host,
             port = port,
-            id = object.id,
+            hash = object.hash,
         )
         .to_string(),
         Some(Json(object)),

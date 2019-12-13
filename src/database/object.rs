@@ -1,58 +1,48 @@
-use crypto::hash::{raw_generic, GenericHash};
+use crypto::strings;
 use database::schema::objects;
-use primitives::object::Object;
+use primitives::object::{Content, Object};
 use serde_json;
 use serde_json::json;
+use std::fmt;
 
-#[derive(Queryable, AsChangeset, Serialize, Deserialize, Debug)]
+#[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize, Debug)]
 #[table_name = "objects"]
-pub struct QueryableObject {
-    pub id: Vec<u8>,
+pub struct DatabaseObject {
+    pub hash: Vec<u8>,
     pub content: serde_json::Value,
 }
 
-impl QueryableObject {
-    pub fn from_object(object: Object) -> QueryableObject {
+impl DatabaseObject {
+    pub fn from_object(object: Object) -> DatabaseObject {
         let object_json = json!({
-            "header": object.header,
-            "body": object.body
+            "header": object.content.header,
+            "body": object.content.body
         });
 
-        QueryableObject {
-            id: object.id.to_vec(),
+        DatabaseObject {
+            hash: object.hash.to_vec(),
             content: object_json,
         }
     }
 
-    pub fn from_insertable_object(id: GenericHash, object: InsertableObject) -> QueryableObject {
-        QueryableObject {
-            id: id.to_vec(),
-            content: object.content,
+    pub fn from_content(content: Content) -> DatabaseObject {
+        let content_json = json!(content);
+        let hash = content.raw_hash().unwrap();
+
+        DatabaseObject {
+            hash: hash,
+            content: content_json,
         }
     }
 }
 
-#[derive(Insertable, AsChangeset, Serialize, Deserialize)]
-#[table_name = "objects"]
-pub struct InsertableObject {
-    pub content: serde_json::Value,
-}
-
-impl InsertableObject {
-    pub fn from_object(object: Object) -> InsertableObject {
-        let object_json = json!({
-            "header": object.header,
-            "body": object.body
-        });
-
-        InsertableObject {
-            content: object_json,
-        }
-    }
-
-    pub fn hash(&self) -> Result<Vec<u8>, ()> {
-        let bytes = serde_json::to_vec(&self.content).unwrap();
-        let hash = raw_generic(&bytes)?;
-        Ok(hash)
+impl fmt::Display for DatabaseObject {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "hash: {}, content: {}",
+            strings::to_hex_string(&self.hash),
+            self.content
+        )
     }
 }

@@ -2,8 +2,9 @@ extern crate cybernetics;
 extern crate serde_json;
 
 use cybernetics::crypto::{hash, msg_block, person, strings};
-use cybernetics::database::object::InsertableObject;
+use cybernetics::database::object::DatabaseObject;
 use cybernetics::database::relation::InsertableRelation;
+use cybernetics::primitives::object::Content;
 use serde_json::json;
 
 #[test]
@@ -43,11 +44,10 @@ fn generic_hash() {
 }
 
 #[test]
-fn object_hash() {
+fn json_hash() {
     let expected = "5f0468006dbd8c7b68c6c142e5e4c5ac2dad81c5f2e02b8fbe93a09814e2ff10";
 
-    let obj = InsertableObject {
-        content: json!({
+    let json = json!({
             "_id": "5de90366f4b446b4a99daf7e",
             "guid": "653c0c70-b7e6-4f99-895e-e8e8f503979a",
             "balance": "₿2,231.27",
@@ -57,14 +57,14 @@ fn object_hash() {
             "gender": "female",
             "tags": [ "labore", "excepteur", "consequat", "tempor" ],
             "friends": [ { "id": 0, "name": "Fuentes Downs" }, { "id": 1, "name": "Madeleine Mcclure" } ]
-        }),
-    };
+    });
+    let json_bytes = serde_json::to_vec(&json).unwrap();
+    let hash = hash::raw_generic(&json_bytes).unwrap();
 
-    assert_eq!(expected, strings::to_hex_string(&obj.hash().unwrap()));
+    assert_eq!(expected, strings::to_hex_string(&hash));
 
     // same json, but different order
-    let obj2 = InsertableObject {
-        content: json!({
+    let json2 = json!({
             "tags": [ "labore", "excepteur", "consequat", "tempor" ],
             "guid": "653c0c70-b7e6-4f99-895e-e8e8f503979a",
             "eyeColor": "brown",
@@ -74,10 +74,28 @@ fn object_hash() {
             "gender": "female",
             "friends": [ { "name": "Fuentes Downs", "id": 0 }, { "id": 1, "name": "Madeleine Mcclure" } ],
             "balance": "₿2,231.27"
-        }),
+    });
+    let json2_bytes = serde_json::to_vec(&json2).unwrap();
+    let hash2 = hash::raw_generic(&json2_bytes).unwrap();
+
+    assert_eq!(expected, strings::to_hex_string(&hash2));
+}
+
+#[test]
+fn object_hash_conversion() {
+    let expected = "50d75e3df52981e4053bc5030a3bfd5a4de5ab994e0fbe6215601091b144c02d";
+
+    let ctx = Content {
+        header: "header".to_string(),
+        body: "body".to_string(),
     };
 
-    assert_eq!(expected, strings::to_hex_string(&obj2.hash().unwrap()));
+    assert_eq!(expected, ctx.hash().unwrap().to_string());
+
+    let database_object = DatabaseObject::from_content(ctx);
+    let hash2 = hash::GenericHash::from_bytes(&database_object.hash).to_string();
+
+    assert_eq!(expected, hash2.to_string());
 }
 
 #[test]

@@ -1,5 +1,6 @@
 use crypto::strings;
 use hex::FromHex;
+use serde::de::{self, Deserialize, Deserializer, Unexpected, Visitor};
 use serde::ser::{Serialize, Serializer};
 use sodiumoxide::crypto::generichash::State;
 use std::convert::TryInto;
@@ -11,7 +12,34 @@ pub struct GenericHash {
     bytes: [u8; GENERIC_HASH_SIZE],
 }
 
+pub fn generic_state() -> Result<State, ()> {
+    let hasher = State::new(GENERIC_HASH_SIZE, None)?;
+    Ok(hasher)
+}
+
+pub fn generic_finalize(hasher: State) -> Result<Vec<u8>, ()> {
+    let finalized = hasher.finalize()?;
+
+    Ok(Vec::from(finalized.as_ref()))
+}
+
+pub fn raw_generic(bytes: &[u8]) -> Result<Vec<u8>, ()> {
+    let mut hasher = generic_state()?;
+    hasher.update(bytes)?;
+
+    Ok(generic_finalize(hasher)?)
+}
+
 impl GenericHash {
+    pub fn new(bytes: &[u8]) -> Result<Self, ()> {
+        let v = raw_generic(bytes)?;
+        let slice: &[u8] = &v;
+        let array: [u8; GENERIC_HASH_SIZE] = slice
+            .try_into()
+            .expect("GenericHash::from_hex: Incorrect length of bytes slice");
+        Ok(Self { bytes: array })
+    }
+
     fn to_string(&self) -> String {
         strings::to_hex_string(&self.bytes)
     }
@@ -59,20 +87,35 @@ impl fmt::Display for GenericHash {
     }
 }
 
-pub fn generic_state() -> Result<State, ()> {
-    let hasher = State::new(GENERIC_HASH_SIZE, None)?;
-    Ok(hasher)
-}
+impl<'de> Deserialize<'de> for GenericHash {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct GH;
 
-pub fn generic_finalize(hasher: State) -> Result<Vec<u8>, ()> {
-    let finalized = hasher.finalize()?;
+        impl<'de> Visitor<'de> for GH {
+            type Value = GenericHash;
 
-    Ok(Vec::from(finalized.as_ref()))
-}
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                write!(
+                    formatter,
+                    "a string in hex format containing {} chars",
+                    GENERIC_HASH_SIZE * 2
+                )
+            }
 
-pub fn raw_generic(bytes: &[u8]) -> Result<Vec<u8>, ()> {
-    let mut hasher = generic_state()?;
-    hasher.update(bytes)?;
-
-    Ok(generic_finalize(hasher)?)
+            fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                if s.len() == GENERIC_HASH_SIZE * 2 {
+                    Ok(GenericHash::from_hex(s))
+                } else {
+                    Err(de::Error::invalid_value(Unexpected::Str(s), &self))
+                }
+            }
+        }
+        deserializer.deserialize_str(GH)
+    }
 }

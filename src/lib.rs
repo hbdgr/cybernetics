@@ -30,6 +30,6 @@ mod accounts_storage;
 pub mod crypto;
 pub mod database;
 mod error;
-mod primitives;
+pub mod primitives;
 pub mod server;
 mod ws_web_server;

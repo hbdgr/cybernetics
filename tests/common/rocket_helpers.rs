@@ -13,17 +13,23 @@ pub fn rocket_client() -> Client {
 
 // extract id from response body
 #[allow(dead_code)]
-fn response_body_id(res_body: option::Option<String>) -> i64 {
+fn response_body_id(res_body: option::Option<String>) -> String {
     let res_json: serde_json::Value = serde_json::from_str(&res_body.unwrap()).unwrap();
-    res_json.get("id").unwrap().as_i64().unwrap()
+    res_json.get("hash").unwrap().as_str().unwrap().to_string()
 }
 
 // create test object in database, with given body and return its id
 #[allow(dead_code)]
-pub fn create_test_object(body_str: &str) -> i64 {
-    let mut full_body = r#"{"content":{"header":"header","body":""#.to_string();
+pub fn create_test_object(body_str: &str) -> String {
+    create_test_object_expect_status(body_str, Status::Created)
+}
+
+// create test object, and expect given status
+#[allow(dead_code)]
+pub fn create_test_object_expect_status(body_str: &str, status: Status) -> String {
+    let mut full_body = r#"{"header":"header","body":""#.to_string();
     full_body.push_str(body_str);
-    full_body.push_str(r#""}}"#);
+    full_body.push_str(r#""}"#);
 
     let client = rocket_client();
     let mut response = client
@@ -32,19 +38,19 @@ pub fn create_test_object(body_str: &str) -> i64 {
         .header(ContentType::JSON)
         .dispatch();
 
-    assert_eq!(response.status(), Status::Created);
+    assert_eq!(response.status(), status);
     response_body_id(response.body_string())
 }
 
-#[allow(dead_code)]
-pub fn create_test_relation(body_str: &str) -> i64 {
-    let client = rocket_client();
-    let mut response = client
-        .post("/relations")
-        .body(body_str)
-        .header(ContentType::JSON)
-        .dispatch();
-
-    assert_eq!(response.status(), Status::Created);
-    response_body_id(response.body_string())
-}
+// #[allow(dead_code)]
+// pub fn create_test_relation(body_str: &str) -> i64 {
+//     let client = rocket_client();
+//     let mut response = client
+//         .post("/relations")
+//         .body(body_str)
+//         .header(ContentType::JSON)
+//         .dispatch();
+//
+//     assert_eq!(response.status(), Status::Created);
+//     response_body_id(response.body_string())
+// }
