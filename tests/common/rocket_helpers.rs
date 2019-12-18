@@ -21,12 +21,16 @@ fn response_body_id(res_body: option::Option<String>) -> String {
 // create test object in database, with given body and return its id
 #[allow(dead_code)]
 pub fn create_test_object(body_str: &str) -> String {
-    create_test_object_expect_status(body_str, Status::Created)
+    let response_body = create_test_object_expect_status(body_str, Status::Created);
+    response_body_id(response_body)
 }
 
 // create test object, and expect given status
 #[allow(dead_code)]
-pub fn create_test_object_expect_status(body_str: &str, status: Status) -> String {
+pub fn create_test_object_expect_status(
+    body_str: &str,
+    status: Status,
+) -> std::option::Option<String> {
     let mut full_body = r#"{"header":"header","body":""#.to_string();
     full_body.push_str(body_str);
     full_body.push_str(r#""}"#);
@@ -39,7 +43,7 @@ pub fn create_test_object_expect_status(body_str: &str, status: Status) -> Strin
         .dispatch();
 
     assert_eq!(response.status(), status);
-    response_body_id(response.body_string())
+    response.body_string()
 }
 
 // #[allow(dead_code)]

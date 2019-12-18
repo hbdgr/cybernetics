@@ -50,12 +50,16 @@ pub fn post(
     content: Json<Content>,
     connection: DbConn,
 ) -> Result<status::Created<Json<Object>>, Status> {
-    object_queries::insert(
-        DatabaseObject::from_content(content.into_inner()),
-        &connection,
-    )
-    .map(|object| object_created(object))
-    .map_err(|error| error_status(error))
+    let c_inner = content.into_inner();
+
+    let obj_exist = object_queries::get(c_inner.hash().unwrap(), &connection);
+    if obj_exist.is_ok() {
+        return Err(Status::Conflict);
+    }
+
+    object_queries::insert(DatabaseObject::from_content(c_inner), &connection)
+        .map(|object| object_created(object))
+        .map_err(|error| error_status(error))
 }
 
 // put object with hash means create new and delete previous
@@ -65,10 +69,14 @@ pub fn put(
     content: Json<Content>,
     connection: DbConn,
 ) -> Result<status::Created<Json<Object>>, Status> {
-    let obj = match object_queries::insert(
-        DatabaseObject::from_content(content.into_inner()),
-        &connection,
-    ) {
+    let c_inner = content.into_inner();
+
+    let obj_exist = object_queries::get(c_inner.hash().unwrap(), &connection);
+    if obj_exist.is_ok() {
+        return Err(Status::Conflict);
+    }
+
+    let obj = match object_queries::insert(DatabaseObject::from_content(c_inner), &connection) {
         Ok(obj) => obj,
         Err(error) => return Err(error_status(error)),
     };

@@ -36,6 +36,13 @@ fn create_object() {
 }
 
 #[test]
+fn create_duplication() {
+    let body_str = "duplicate";
+    create_test_object(body_str);
+    create_test_object_expect_status(body_str, Status::Conflict);
+}
+
+#[test]
 fn get_object() {
     let created_obj_id = create_test_object("obj_to_get");
 
@@ -115,6 +122,24 @@ fn put_object() {
         json_response["hash"].as_str(),
         Some("8774b510a7950450834c6ddfce25ffd2829e1d1ce09bc0842a53b2502843f1d5")
     );
+}
+
+#[test]
+fn put_duplicated() {
+    let body_str = "put_duplicated";
+    let created_obj_id = create_test_object(body_str);
+    let mut new_same_body = r#"{"header":"header","body":""#.to_string();
+    new_same_body.push_str(body_str);
+    new_same_body.push_str(r#""}"#);
+
+    let client = rocket_client();
+    let response = client
+        .put(format!("/objects/{}", created_obj_id))
+        .body(&new_same_body)
+        .header(ContentType::JSON)
+        .dispatch();
+
+    assert_eq!(response.status(), Status::Conflict);
 }
 
 #[test]
