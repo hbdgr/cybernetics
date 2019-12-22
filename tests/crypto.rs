@@ -3,8 +3,9 @@ extern crate serde_json;
 
 use cybernetics::crypto::{hash, msg_block, person, strings};
 use cybernetics::database::object::DatabaseObject;
-use cybernetics::database::relation::InsertableRelation;
 use cybernetics::primitives::object::Content;
+use cybernetics::primitives::relation::RelationBase;
+use hash::GenericHash;
 use serde_json::json;
 
 #[test]
@@ -93,28 +94,40 @@ fn object_hash_conversion() {
     assert_eq!(expected, ctx.hash().unwrap().to_string());
 
     let database_object = DatabaseObject::from_content(ctx);
-    let hash2 = hash::GenericHash::from_bytes(&database_object.hash).to_string();
+    let hash2 = GenericHash::from_bytes(&database_object.hash).to_string();
 
     assert_eq!(expected, hash2.to_string());
 }
 
 #[test]
 fn relation_hash() {
-    let expected = "5559b74da15c1125ea3244a1ed284e2609f9d034bd11a9fe5f35769a3c0a2b1d";
+    let expected = "03a73b0774eaa16a75930737fc4c317da50bd9769bd983bea89c23c6f0e5873c";
 
-    let rel = InsertableRelation {
-        object_definition_id: 1,
-        first_object_id: 2,
-        second_object_id: 3,
+    let rel = RelationBase {
+        definition: GenericHash::from_hex(
+            "1111111111111111111111111111111111111111111111111111111111111111",
+        ),
+        first_object: GenericHash::from_hex(
+            "2222222222222222222222222222222222222222222222222222222222222222",
+        ),
+        second_object: GenericHash::from_hex(
+            "3333333333333333333333333333333333333333333333333333333333333333",
+        ),
     };
 
-    assert_eq!(expected, strings::to_hex_string(&rel.hash().unwrap()));
+    assert_eq!(expected, rel.hash().unwrap().to_string());
 
-    let rel2 = InsertableRelation {
-        object_definition_id: 1,
-        first_object_id: 3,
-        second_object_id: 2,
+    let rel2 = RelationBase {
+        definition: GenericHash::from_hex(
+            "1111111111111111111111111111111111111111111111111111111111111111",
+        ),
+        first_object: GenericHash::from_hex(
+            "3333333333333333333333333333333333333333333333333333333333333333",
+        ),
+        second_object: GenericHash::from_hex(
+            "2222222222222222222222222222222222222222222222222222222222222222",
+        ),
     };
 
-    assert_eq!(expected, strings::to_hex_string(&rel2.hash().unwrap()));
+    assert_eq!(expected, rel2.hash().unwrap().to_string());
 }
