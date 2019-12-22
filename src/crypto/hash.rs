@@ -8,6 +8,7 @@ use std::fmt;
 
 const GENERIC_HASH_SIZE: usize = 32;
 
+#[derive(Clone)]
 pub struct GenericHash {
     bytes: [u8; GENERIC_HASH_SIZE],
 }

@@ -2,7 +2,7 @@ use crypto::hash::GenericHash;
 use database::object::DatabaseObject;
 use serde_json::json;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Content {
     pub header: String,
     pub body: String,

@@ -3,8 +3,9 @@ extern crate serde_json;
 
 use cybernetics::crypto::{hash, msg_block, person, strings};
 use cybernetics::database::object::DatabaseObject;
-use cybernetics::primitives::object::Content;
-use cybernetics::primitives::relation::RelationBase;
+use cybernetics::database::relation::DatabaseRelation;
+use cybernetics::primitives::object::{Content, Object};
+use cybernetics::primitives::relation::{Relation, RelationBase};
 use hash::GenericHash;
 use serde_json::json;
 
@@ -93,10 +94,14 @@ fn object_hash_conversion() {
 
     assert_eq!(expected, ctx.hash().unwrap().to_string());
 
-    let database_object = DatabaseObject::from_content(ctx);
-    let hash2 = GenericHash::from_bytes(&database_object.hash).to_string();
-
+    let object = Object::from_content(ctx.clone()).unwrap();
+    let hash2 = object.hash.to_string();
     assert_eq!(expected, hash2.to_string());
+
+    let database_object = DatabaseObject::from_content(ctx);
+    let hash3 = GenericHash::from_bytes(&database_object.hash).to_string();
+
+    assert_eq!(expected, hash3.to_string());
 }
 
 #[test]
@@ -130,4 +135,31 @@ fn relation_hash() {
     };
 
     assert_eq!(expected, rel2.hash().unwrap().to_string());
+}
+
+#[test]
+fn relation_hash_conversion() {
+    let expected = "03a73b0774eaa16a75930737fc4c317da50bd9769bd983bea89c23c6f0e5873c";
+
+    let rel = RelationBase {
+        definition: GenericHash::from_hex(
+            "1111111111111111111111111111111111111111111111111111111111111111",
+        ),
+        first_object: GenericHash::from_hex(
+            "2222222222222222222222222222222222222222222222222222222222222222",
+        ),
+        second_object: GenericHash::from_hex(
+            "3333333333333333333333333333333333333333333333333333333333333333",
+        ),
+    };
+
+    assert_eq!(expected, rel.hash().unwrap().to_string());
+
+    let relation = Relation::from_relation_base(rel.clone()).unwrap();
+    let hash2 = relation.hash.to_string();
+    assert_eq!(expected, hash2.to_string());
+
+    let database_relation = DatabaseRelation::from_relation_base(rel);
+    let hash3 = GenericHash::from_bytes(&database_relation.hash).to_string();
+    assert_eq!(expected, hash3.to_string());
 }

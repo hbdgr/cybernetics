@@ -2,7 +2,7 @@ use crypto::hash;
 use crypto::hash::GenericHash;
 use database::relation::DatabaseRelation;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct RelationBase {
     pub definition: GenericHash,
     pub first_object: GenericHash,
