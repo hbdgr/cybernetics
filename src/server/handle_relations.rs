@@ -1,8 +1,10 @@
 use database::connection_pool::DbConn;
 use std::env;
 
-use database::relation::{InsertableRelation, Relation};
+use crypto::hash::GenericHash;
+use database::relation::DatabaseRelation;
 use database::relation_queries;
+use primitives::relation::{Relation, RelationBase};
 
 use rocket::http::Status;
 use rocket::response::status;
@@ -10,12 +12,15 @@ use rocket_contrib::json::Json;
 
 use server::router::error_status;
 
-#[post("/", format = "application/json", data = "<relation>")]
+#[post("/", format = "application/json", data = "<relation_base>")]
 pub fn post(
-    relation: Json<InsertableRelation>,
+    relation_base: Json<RelationBase>,
     connection: DbConn,
 ) -> Result<status::Created<Json<Relation>>, Status> {
-    relation_queries::insert(relation.into_inner(), &connection)
+    let rb_inner = relation_base.into_inner();
+    let database_rel = DatabaseRelation::from_relation_base(rb_inner);
+
+    relation_queries::insert(database_rel, &connection)
         .map(|relation| relation_created(relation))
         .map_err(|error| error_status(error))
 }
@@ -26,32 +31,44 @@ pub fn relation_created(relation: Relation) -> status::Created<Json<Relation>> {
 
     status::Created(
         format!(
-            "{host}:{port}/relations/{id}",
+            "{host}:{port}/relations/{hash}",
             host = host,
             port = port,
-            id = relation.id
+            hash = relation.hash
         )
         .to_string(),
         Some(Json(relation)),
     )
 }
 
-#[put("/<id>", format = "application/json", data = "<insertable>")]
+// put object with hash means create new and delete previous
+#[put("/<hash>", format = "application/json", data = "<relation_base>")]
 pub fn put(
-    id: i64,
-    insertable: Json<InsertableRelation>,
+    hash: String,
+    relation_base: Json<RelationBase>,
     connection: DbConn,
-) -> Result<Json<Relation>, Status> {
-    let relation = Relation::from_insertable_object(id, insertable.into_inner());
+) -> Result<status::Created<Json<Relation>>, Status> {
+    let rb_inner = relation_base.into_inner();
+    let new_hash = rb_inner.hash().unwrap();
 
-    relation_queries::update(relation, &connection)
-        .map(|relation| Json(relation))
-        .map_err(|error| error_status(error))
+    // check if relation already exist
+    if let Ok(_) = relation_queries::get(new_hash, &connection) {
+        return Err(Status::Conflict);
+    }
+
+    let ghash = GenericHash::from_hex(&hash);
+    let database_rel = DatabaseRelation::from_relation_base(rb_inner);
+    relation_queries::insert(database_rel, &connection)
+        .map_err(|err| error_status(err))
+        .map(|relation| {
+            let _ = relation_queries::delete(ghash, &connection).map_err(|err| error_status(err));
+            relation_created(relation)
+        })
 }
 
-#[get("/<id>")]
-pub fn get(id: i64, connection: DbConn) -> Result<Json<Relation>, Status> {
-    relation_queries::get(id, &connection)
+#[get("/<hash>")]
+pub fn get(hash: String, connection: DbConn) -> Result<Json<Relation>, Status> {
+    relation_queries::get(GenericHash::from_hex(&hash), &connection)
         .map(|relation| Json(relation))
         .map_err(|error| error_status(error))
 }
@@ -63,12 +80,15 @@ pub fn all(connection: DbConn) -> Result<Json<Vec<Relation>>, Status> {
         .map_err(|error| error_status(error))
 }
 
-#[delete("/<id>")]
-pub fn delete(id: i64, connection: DbConn) -> Result<Status, Status> {
-    match relation_queries::get(id, &connection) {
-        Ok(_) => relation_queries::delete(id, &connection)
-            .map(|_| Status::NoContent)
-            .map_err(|error| error_status(error)),
-        Err(error) => Err(error_status(error)),
+#[delete("/<hash>")]
+pub fn delete(hash: String, connection: DbConn) -> Result<Status, Status> {
+    let ghash = GenericHash::from_hex(&hash);
+
+    if let Err(err) = relation_queries::get(ghash.clone(), &connection) {
+        return Err(error_status(err));
     }
+
+    relation_queries::delete(ghash, &connection)
+        .map(|_| Status::NoContent)
+        .map_err(|err| error_status(err))
 }

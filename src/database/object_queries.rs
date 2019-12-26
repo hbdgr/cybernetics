@@ -11,22 +11,20 @@ pub fn all(connection: &PgConnection) -> QueryResult<Vec<Object>> {
 
     let mut vec = Vec::new();
     for ins in return_vec {
-        let id = ins.hash.clone();
-        let obj = match Object::from_database_object(ins) {
-            Ok(obj) => obj,
-            Err(err) => {
-                error!("[query - all]: Bad formated object [{:?}]: {:?}", id, err);
-                continue;
-            }
-        };
-        vec.push(obj)
+        let hash = ins.hash.clone();
+
+        let _ = Object::from_database_object(ins)
+            .map(|obj| vec.push(obj))
+            .map_err(|e| {
+                error!("[query - all]: Bad formated object [{:?}]: {:?}", hash, e);
+            });
     }
     Ok(vec)
 }
 
-pub fn get(id: GenericHash, connection: &PgConnection) -> QueryResult<Object> {
+pub fn get(hash: GenericHash, connection: &PgConnection) -> QueryResult<Object> {
     let return_object: DatabaseObject = objects::table
-        .find(&id.to_vec())
+        .find(&hash.to_vec())
         .get_result::<DatabaseObject>(connection)?;
 
     let obj = Object::from_database_object(return_object).unwrap();
@@ -42,6 +40,6 @@ pub fn insert(object: DatabaseObject, connection: &PgConnection) -> QueryResult<
     Ok(obj)
 }
 
-pub fn delete(id: GenericHash, connection: &PgConnection) -> QueryResult<usize> {
-    diesel::delete(objects::table.find(id.to_vec())).execute(connection)
+pub fn delete(hash: GenericHash, connection: &PgConnection) -> QueryResult<usize> {
+    diesel::delete(objects::table.find(hash.to_vec())).execute(connection)
 }

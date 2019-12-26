@@ -44,11 +44,11 @@ fn create_duplication() {
 
 #[test]
 fn get_object() {
-    let created_obj_id = create_test_object("obj_to_get");
+    let created_obj_hash = create_test_object("obj_to_get");
 
     let client = rocket_client();
     let mut response = client
-        .get(format!("/objects/{}", created_obj_id))
+        .get(format!("/objects/{}", created_obj_hash))
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
 
@@ -87,21 +87,28 @@ fn get_all() {
 
 #[test]
 fn put_object() {
-    let created_obj_id = create_test_object("before_put");
+    let created_obj_hash = create_test_object("before_put");
     let new_body = r#"{"header":"header","body":"new_better.."}"#;
 
     let client = rocket_client();
     let mut response = client
-        .put(format!("/objects/{}", created_obj_id))
+        .put(format!("/objects/{}", created_obj_hash))
         .body(&new_body)
         .header(ContentType::JSON)
         .dispatch();
-
     assert_eq!(response.status(), Status::Created);
+
+    // conflict for existing object
+    let response_conflict = client
+        .put(format!("/objects/{}", created_obj_hash))
+        .body(&new_body)
+        .header(ContentType::JSON)
+        .dispatch();
+    assert_eq!(response_conflict.status(), Status::Conflict);
 
     // old object should be deleted
     let old_obj_response = client
-        .get(format!("/objects/{}", created_obj_id))
+        .get(format!("/objects/{}", created_obj_hash))
         .dispatch();
     assert_eq!(old_obj_response.status(), Status::NotFound);
 
@@ -109,7 +116,7 @@ fn put_object() {
         serde_json::from_str(&response.body_string().unwrap()).unwrap();
 
     assert!(
-        created_obj_id != json_response["hash"].as_str().unwrap(),
+        created_obj_hash != json_response["hash"].as_str().unwrap(),
         "new hash should be different"
     );
 
@@ -127,14 +134,14 @@ fn put_object() {
 #[test]
 fn put_duplicated() {
     let body_str = "put_duplicated";
-    let created_obj_id = create_test_object(body_str);
+    let created_obj_hash = create_test_object(body_str);
     let mut new_same_body = r#"{"header":"header","body":""#.to_string();
     new_same_body.push_str(body_str);
     new_same_body.push_str(r#""}"#);
 
     let client = rocket_client();
     let response = client
-        .put(format!("/objects/{}", created_obj_id))
+        .put(format!("/objects/{}", created_obj_hash))
         .body(&new_same_body)
         .header(ContentType::JSON)
         .dispatch();
@@ -145,16 +152,16 @@ fn put_duplicated() {
 #[test]
 fn delete_object() {
     let body_str = "obj_to_delete";
-    let created_obj_id = create_test_object(body_str);
+    let created_obj_hash = create_test_object(body_str);
 
     let client = rocket_client();
     let response = client
-        .delete(format!("/objects/{}", created_obj_id))
+        .delete(format!("/objects/{}", created_obj_hash))
         .dispatch();
     assert_eq!(response.status(), Status::NoContent);
 
     let response = client
-        .get(format!("/objects/{}", created_obj_id))
+        .get(format!("/objects/{}", created_obj_hash))
         .dispatch();
     assert_eq!(response.status(), Status::NotFound);
 }
