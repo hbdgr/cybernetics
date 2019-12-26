@@ -1,5 +1,5 @@
 use crypto::hash::GenericHash;
-use primitives::object::Object;
+use primitives::object::{Content, Object};
 
 use database::object::DatabaseObject;
 use database::schema::objects;
@@ -31,9 +31,10 @@ pub fn get(hash: GenericHash, connection: &PgConnection) -> QueryResult<Object> 
     Ok(obj)
 }
 
-pub fn insert(object: DatabaseObject, connection: &PgConnection) -> QueryResult<Object> {
+pub fn insert(content: Content, connection: &PgConnection) -> QueryResult<Object> {
+    let database_object = DatabaseObject::from_content(content);
     let return_object: DatabaseObject = diesel::insert_into(objects::table)
-        .values(&object)
+        .values(&database_object)
         .get_result(connection)?;
 
     let obj = Object::from_database_object(return_object).unwrap();

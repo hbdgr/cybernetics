@@ -1,5 +1,5 @@
 use crypto::hash::GenericHash;
-use primitives::relation::Relation;
+use primitives::relation::{Relation, RelationBase};
 
 use database::relation::DatabaseRelation;
 use database::schema::relations;
@@ -30,12 +30,10 @@ pub fn get(hash: GenericHash, connection: &PgConnection) -> QueryResult<Relation
     Ok(relation)
 }
 
-pub fn insert(
-    database_relation: DatabaseRelation,
-    connection: &PgConnection,
-) -> QueryResult<Relation> {
+pub fn insert(relation_base: RelationBase, connection: &PgConnection) -> QueryResult<Relation> {
+    let database_rel = DatabaseRelation::from_relation_base(relation_base);
     let return_relation = diesel::insert_into(relations::table)
-        .values(&database_relation)
+        .values(&database_rel)
         .get_result(connection)?;
 
     let relation = Relation::from_database_relation(return_relation).unwrap();

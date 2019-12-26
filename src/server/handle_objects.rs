@@ -2,7 +2,6 @@ use database::connection_pool::DbConn;
 use std::env;
 
 use crypto::hash::GenericHash;
-use database::object::DatabaseObject;
 use database::object_queries;
 use primitives::object::{Content, Object};
 
@@ -59,8 +58,7 @@ pub fn post(
         return Err(Status::Conflict);
     }
 
-    let database_object = DatabaseObject::from_content(c_inner);
-    object_queries::insert(database_object, &connection)
+    object_queries::insert(c_inner, &connection)
         .map(|object| object_created(object))
         .map_err(|error| error_status(error))
 }
@@ -80,8 +78,7 @@ pub fn put(
     }
 
     let ghash = GenericHash::from_hex(&hash);
-    let database_object = DatabaseObject::from_content(c_inner);
-    object_queries::insert(database_object, &connection)
+    object_queries::insert(c_inner, &connection)
         .map_err(|err| error_status(err))
         .map(|object| {
             let _ = object_queries::delete(ghash, &connection).map_err(|err| error_status(err));

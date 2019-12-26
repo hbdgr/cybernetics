@@ -2,7 +2,6 @@ use database::connection_pool::DbConn;
 use std::env;
 
 use crypto::hash::GenericHash;
-use database::relation::DatabaseRelation;
 use database::relation_queries;
 use primitives::relation::{Relation, RelationBase};
 
@@ -25,8 +24,7 @@ pub fn post(
         return Err(Status::Conflict);
     }
 
-    let database_rel = DatabaseRelation::from_relation_base(rb_inner);
-    relation_queries::insert(database_rel, &connection)
+    relation_queries::insert(rb_inner, &connection)
         .map(|relation| relation_created(relation))
         .map_err(|error| error_status(error))
 }
@@ -63,9 +61,7 @@ pub fn put(
     }
 
     let ghash = GenericHash::from_hex(&hash);
-    let database_rel = DatabaseRelation::from_relation_base(rb_inner);
-
-    relation_queries::insert(database_rel, &connection)
+    relation_queries::insert(rb_inner, &connection)
         .map_err(|err| error_status(err))
         .map(|relation| {
             let _ = relation_queries::delete(ghash, &connection).map_err(|err| error_status(err));
