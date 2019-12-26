@@ -3,7 +3,9 @@ extern crate serde_json;
 
 mod common;
 
-use common::rocket_helpers::{create_test_object, create_test_relation, rocket_client};
+use common::rocket_helpers::{
+    create_test_object, create_test_relation, create_test_relation_expect_status, rocket_client,
+};
 use rocket::http::{ContentType, Status};
 use serde_json::json;
 
@@ -78,6 +80,13 @@ fn create_relation() {
 }
 
 #[test]
+fn create_duplication() {
+    let rel_body = create_test_relation_body("create_duplication");
+    create_test_relation(&rel_body);
+    create_test_relation_expect_status(&rel_body, Status::Conflict);
+}
+
+#[test]
 fn get_relation_by_hash() {
     let rel_body = create_test_relation_body("1");
     let relation_hash = create_test_relation(&rel_body);
@@ -146,14 +155,6 @@ fn put_relation() {
         .dispatch();
     assert_eq!(response.status(), Status::Created);
 
-    // conflict for existing relation
-    let response_conflict = client
-        .put(format!("/relations/{}", relation_hash))
-        .body(&rel_body)
-        .header(ContentType::JSON)
-        .dispatch();
-    assert_eq!(response_conflict.status(), Status::Conflict);
-
     // old relation should be deleted
     let old_rel_response = client
         .get(format!("/relations/{}", relation_hash))
@@ -179,6 +180,22 @@ fn put_relation() {
         obj_first_hash
     );
     assert_eq!(json_relation_second_obj(json_response), obj_second_hash);
+}
+
+#[test]
+fn put_duplication() {
+    let rel_body = create_test_relation_body("put_duplication");
+    let relation_hash = create_test_relation(&rel_body);
+
+    let client = rocket_client();
+
+    // conflict for existing relation
+    let response_conflict = client
+        .put(format!("/relations/{}", relation_hash))
+        .body(&rel_body)
+        .header(ContentType::JSON)
+        .dispatch();
+    assert_eq!(response_conflict.status(), Status::Conflict);
 }
 
 #[test]

@@ -48,6 +48,16 @@ pub fn create_test_object_expect_status(
 
 #[allow(dead_code)]
 pub fn create_test_relation(body_str: &str) -> String {
+    let response_body = create_test_relation_expect_status(body_str, Status::Created);
+    response_body_hash(response_body)
+}
+
+// create test relation, and expect given status
+#[allow(dead_code)]
+pub fn create_test_relation_expect_status(
+    body_str: &str,
+    status: Status,
+) -> std::option::Option<String> {
     let client = rocket_client();
     let mut response = client
         .post("/relations")
@@ -55,6 +65,6 @@ pub fn create_test_relation(body_str: &str) -> String {
         .header(ContentType::JSON)
         .dispatch();
 
-    assert_eq!(response.status(), Status::Created);
-    response_body_hash(response.body_string())
+    assert_eq!(response.status(), status);
+    response.body_string()
 }

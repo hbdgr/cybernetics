@@ -18,8 +18,14 @@ pub fn post(
     connection: DbConn,
 ) -> Result<status::Created<Json<Relation>>, Status> {
     let rb_inner = relation_base.into_inner();
-    let database_rel = DatabaseRelation::from_relation_base(rb_inner);
+    let new_hash = rb_inner.hash().unwrap();
 
+    // check if relation already exist
+    if let Ok(_) = relation_queries::get(new_hash, &connection) {
+        return Err(Status::Conflict);
+    }
+
+    let database_rel = DatabaseRelation::from_relation_base(rb_inner);
     relation_queries::insert(database_rel, &connection)
         .map(|relation| relation_created(relation))
         .map_err(|error| error_status(error))
@@ -58,6 +64,7 @@ pub fn put(
 
     let ghash = GenericHash::from_hex(&hash);
     let database_rel = DatabaseRelation::from_relation_base(rb_inner);
+
     relation_queries::insert(database_rel, &connection)
         .map_err(|err| error_status(err))
         .map(|relation| {
