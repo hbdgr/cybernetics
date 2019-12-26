@@ -98,14 +98,6 @@ fn put_object() {
         .dispatch();
     assert_eq!(response.status(), Status::Created);
 
-    // conflict for existing object
-    let response_conflict = client
-        .put(format!("/objects/{}", created_obj_hash))
-        .body(&new_body)
-        .header(ContentType::JSON)
-        .dispatch();
-    assert_eq!(response_conflict.status(), Status::Conflict);
-
     // old object should be deleted
     let old_obj_response = client
         .get(format!("/objects/{}", created_obj_hash))
@@ -140,13 +132,15 @@ fn put_duplicated() {
     new_same_body.push_str(r#""}"#);
 
     let client = rocket_client();
-    let response = client
+
+    // conflict for existing object
+    let response_conflict = client
         .put(format!("/objects/{}", created_obj_hash))
         .body(&new_same_body)
         .header(ContentType::JSON)
         .dispatch();
 
-    assert_eq!(response.status(), Status::Conflict);
+    assert_eq!(response_conflict.status(), Status::Conflict);
 }
 
 #[test]

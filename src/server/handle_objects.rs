@@ -52,12 +52,15 @@ pub fn post(
 ) -> Result<status::Created<Json<Object>>, Status> {
     let c_inner = content.into_inner();
 
-    let obj_exist = object_queries::get(c_inner.hash().unwrap(), &connection);
-    if obj_exist.is_ok() {
+    let new_hash = c_inner.hash().unwrap();
+
+    // check if relation already exist
+    if let Ok(_) = object_queries::get(new_hash, &connection) {
         return Err(Status::Conflict);
     }
 
-    object_queries::insert(DatabaseObject::from_content(c_inner), &connection)
+    let database_object = DatabaseObject::from_content(c_inner);
+    object_queries::insert(database_object, &connection)
         .map(|object| object_created(object))
         .map_err(|error| error_status(error))
 }
@@ -71,32 +74,33 @@ pub fn put(
 ) -> Result<status::Created<Json<Object>>, Status> {
     let c_inner = content.into_inner();
 
-    let obj_exist = object_queries::get(c_inner.hash().unwrap(), &connection);
-    if obj_exist.is_ok() {
+    // check if relation already exist
+    if let Ok(_) = object_queries::get(c_inner.hash().unwrap(), &connection) {
         return Err(Status::Conflict);
     }
 
-    let obj = match object_queries::insert(DatabaseObject::from_content(c_inner), &connection) {
-        Ok(obj) => obj,
-        Err(error) => return Err(error_status(error)),
-    };
-    match object_queries::delete(GenericHash::from_hex(&hash), &connection) {
-        Ok(s) => s,
-        Err(error) => return Err(error_status(error)),
-    };
-
-    Ok(object_created(obj))
+    let ghash = GenericHash::from_hex(&hash);
+    let database_object = DatabaseObject::from_content(c_inner);
+    object_queries::insert(database_object, &connection)
+        .map_err(|err| error_status(err))
+        .map(|object| {
+            let _ = object_queries::delete(ghash, &connection).map_err(|err| error_status(err));
+            object_created(object)
+        })
 }
 
 // real delete is possible only for not published objects
 #[delete("/<hash>")]
 pub fn delete(hash: String, connection: DbConn) -> Result<Status, Status> {
-    match object_queries::get(GenericHash::from_hex(&hash), &connection) {
-        Ok(_) => object_queries::delete(GenericHash::from_hex(&hash), &connection)
-            .map(|_| Status::NoContent)
-            .map_err(|error| error_status(error)),
-        Err(error) => Err(error_status(error)),
+    let ghash = GenericHash::from_hex(&hash);
+
+    if let Err(err) = object_queries::get(ghash.clone(), &connection) {
+        return Err(error_status(err));
     }
+
+    object_queries::delete(ghash, &connection)
+        .map(|_| Status::NoContent)
+        .map_err(|error| error_status(error))
 }
 
 pub fn object_created(object: Object) -> status::Created<Json<Object>> {
