@@ -3,9 +3,7 @@ extern crate serde_json;
 
 mod common;
 
-use common::rocket_helpers::{
-    create_test_object, create_test_relation, create_test_relation_expect_status, rocket_client,
-};
+use common::rocket_helpers;
 use rocket::http::{ContentType, Status};
 use serde_json::json;
 
@@ -19,9 +17,9 @@ fn relation_body(definition: &str, first_object: &str, second_object: &str) -> S
 }
 
 fn create_test_relation_body(postfix: &str) -> String {
-    let def = create_test_object(&format!("object def {}", postfix));
-    let obj_first = create_test_object(&format!("first object {}", postfix));
-    let obj_second = create_test_object(&format!("second object {}", postfix));
+    let def = rocket_helpers::create_test_relation_def(false, &format!("object def {}", postfix));
+    let obj_first = rocket_helpers::create_test_element(&format!("first object {}", postfix));
+    let obj_second = rocket_helpers::create_test_element(&format!("second object {}", postfix));
 
     relation_body(&def, &obj_first, &obj_second)
 }
@@ -53,13 +51,13 @@ fn json_relation_second_obj(json_response: serde_json::Value) -> String {
 
 #[test]
 fn create_relation() {
-    let def_hash = create_test_object("object def");
-    let obj_first_hash = create_test_object("first object");
-    let obj_second_hash = create_test_object("second object");
+    let def_hash = rocket_helpers::create_test_relation_def(false, "object def");
+    let obj_first_hash = rocket_helpers::create_test_element("first object");
+    let obj_second_hash = rocket_helpers::create_test_element("second object");
 
     let rel_body = relation_body(&def_hash, &obj_first_hash, &obj_second_hash);
 
-    let client = rocket_client();
+    let client = rocket_helpers::rocket_client();
     let mut response = client
         .post("/relations")
         .body(&rel_body)
@@ -82,17 +80,17 @@ fn create_relation() {
 #[test]
 fn create_duplication() {
     let rel_body = create_test_relation_body("create_duplication");
-    create_test_relation(&rel_body);
-    create_test_relation_expect_status(&rel_body, Status::Conflict);
+    rocket_helpers::create_test_relation(&rel_body);
+    rocket_helpers::create_test_relation_expect_status(&rel_body, Status::Conflict);
 }
 
 #[test]
 fn get_relation_by_hash() {
     let rel_body = create_test_relation_body("1");
-    let relation_hash = create_test_relation(&rel_body);
+    let relation_hash = rocket_helpers::create_test_relation(&rel_body);
 
     println!("created {}", relation_hash);
-    let client = rocket_client();
+    let client = rocket_helpers::rocket_client();
 
     let mut response = client
         .get(format!("/relations/{}", relation_hash))
@@ -108,10 +106,10 @@ fn get_relation_by_hash() {
 
 #[test]
 fn get_all_relations() {
-    create_test_relation(&create_test_relation_body("aa"));
-    create_test_relation(&create_test_relation_body("bb"));
+    rocket_helpers::create_test_relation(&create_test_relation_body("aa"));
+    rocket_helpers::create_test_relation(&create_test_relation_body("bb"));
 
-    let client = rocket_client();
+    let client = rocket_helpers::rocket_client();
     let mut response = client.get("/relations").dispatch();
     assert_eq!(response.status(), Status::Ok);
 
@@ -137,17 +135,17 @@ fn get_all_relations() {
 
 #[test]
 fn put_relation() {
-    let def_hash = create_test_object("put definition");
-    let obj_first_hash = create_test_object("first put object");
-    let obj_second_hash = create_test_object("second put object");
+    let def_hash = rocket_helpers::create_test_relation_def(false, "put definition");
+    let obj_first_hash = rocket_helpers::create_test_element("first put object");
+    let obj_second_hash = rocket_helpers::create_test_element("second put object");
 
     let mut rel_body = relation_body(&def_hash, &obj_first_hash, &obj_second_hash);
-    let relation_hash = create_test_relation(&rel_body);
+    let relation_hash = rocket_helpers::create_test_relation(&rel_body);
 
-    let new_def_hash = create_test_object("new_definition");
+    let new_def_hash = rocket_helpers::create_test_element("new_definition");
     rel_body = relation_body(&new_def_hash, &obj_first_hash, &obj_second_hash);
 
-    let client = rocket_client();
+    let client = rocket_helpers::rocket_client();
     let mut response = client
         .put(format!("/relations/{}", relation_hash))
         .body(&rel_body)
@@ -185,9 +183,9 @@ fn put_relation() {
 #[test]
 fn put_duplication() {
     let rel_body = create_test_relation_body("put_duplication");
-    let relation_hash = create_test_relation(&rel_body);
+    let relation_hash = rocket_helpers::create_test_relation(&rel_body);
 
-    let client = rocket_client();
+    let client = rocket_helpers::rocket_client();
 
     // conflict for existing relation
     let response_conflict = client
@@ -201,9 +199,9 @@ fn put_duplication() {
 #[test]
 fn delete_relation() {
     let rel_body = create_test_relation_body("D");
-    let relation_hash = create_test_relation(&rel_body);
+    let relation_hash = rocket_helpers::create_test_relation(&rel_body);
 
-    let client = rocket_client();
+    let client = rocket_helpers::rocket_client();
     let response = client
         .delete(format!("/relations/{}", relation_hash))
         .dispatch();

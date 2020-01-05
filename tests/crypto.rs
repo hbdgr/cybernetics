@@ -1,10 +1,14 @@
 extern crate cybernetics;
 extern crate serde_json;
 
+mod common;
+
+use common::object_helpers;
 use cybernetics::crypto::{hash, msg_block, person, strings};
 use cybernetics::database::object::DatabaseObject;
 use cybernetics::database::relation::DatabaseRelation;
-use cybernetics::primitives::object::{Content, Object};
+use cybernetics::primitives::header::ObjectType;
+use cybernetics::primitives::object::Object;
 use cybernetics::primitives::relation::{Relation, RelationBase};
 use hash::GenericHash;
 use serde_json::json;
@@ -85,16 +89,14 @@ fn json_hash() {
 
 #[test]
 fn object_hash_conversion() {
-    let expected = "50d75e3df52981e4053bc5030a3bfd5a4de5ab994e0fbe6215601091b144c02d";
+    let expected = "ebcc521a3b0a7eb3df607a9ad2cea3659c77762642c2d13ca84d3ba44f40ead3";
 
-    let ctx = Content {
-        header: "header".to_string(),
-        body: "body".to_string(),
-    };
+    let ctx = object_helpers::test_content(ObjectType::PrimaryElement, "body");
 
     assert_eq!(expected, ctx.hash().unwrap().to_string());
 
     let object = Object::from_content(ctx.clone()).unwrap();
+
     let hash2 = object.hash.to_string();
     assert_eq!(expected, hash2.to_string());
 

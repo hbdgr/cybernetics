@@ -2,8 +2,11 @@ extern crate cybernetics;
 extern crate rocket;
 
 use self::cybernetics::server;
+use common::object_helpers;
 use common::rocket_helpers::rocket::http::{ContentType, Status};
 use common::rocket_helpers::rocket::local::Client;
+// use cybernetics::primitives::header::ObjectType;
+use super::header::ObjectType;
 use std::option;
 
 #[allow(dead_code)]
@@ -18,22 +21,34 @@ fn response_body_hash(res_body: option::Option<String>) -> String {
     res_json.get("hash").unwrap().as_str().unwrap().to_string()
 }
 
-// create test object in database, with given body and return its id
+// create test primary_element in database by POST method, with given body and return its id
 #[allow(dead_code)]
-pub fn create_test_object(body_str: &str) -> String {
-    let response_body = create_test_object_expect_status(body_str, Status::Created);
+pub fn create_test_element(body_str: &str) -> String {
+    let response_body =
+        create_test_object_expect_status(ObjectType::PrimaryElement, body_str, Status::Created);
+    response_body_hash(response_body)
+}
+
+// create test relation_definition in database by POST method, with given body and return its id
+// directed: relation can be directed or not
+#[allow(dead_code)]
+pub fn create_test_relation_def(directed: bool, body_str: &str) -> String {
+    let response_body = create_test_object_expect_status(
+        ObjectType::RelationDefinition { directed: directed },
+        body_str,
+        Status::Created,
+    );
     response_body_hash(response_body)
 }
 
 // create test object, and expect given status
 #[allow(dead_code)]
 pub fn create_test_object_expect_status(
+    object_type: ObjectType,
     body_str: &str,
     status: Status,
 ) -> std::option::Option<String> {
-    let mut full_body = r#"{"header":"header","body":""#.to_string();
-    full_body.push_str(body_str);
-    full_body.push_str(r#""}"#);
+    let full_body = object_helpers::test_content_json(object_type, body_str).to_string();
 
     let client = rocket_client();
     let mut response = client
