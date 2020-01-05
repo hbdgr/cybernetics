@@ -1,10 +1,11 @@
 use crypto::hash::GenericHash;
 use database::object::DatabaseObject;
+use primitives::header::Header;
 use serde_json::json;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Content {
-    pub header: String,
+    pub header: Header,
     pub body: String,
 }
 
