@@ -4,6 +4,7 @@ extern crate serde_json;
 mod common;
 
 use common::object_helpers;
+use common::rocket_helpers;
 use cybernetics::crypto::{hash, msg_block, person, strings};
 use cybernetics::database::object::DatabaseObject;
 use cybernetics::database::relation::DatabaseRelation;
@@ -108,12 +109,12 @@ fn object_hash_conversion() {
 
 #[test]
 fn relation_hash() {
-    let expected = "03a73b0774eaa16a75930737fc4c317da50bd9769bd983bea89c23c6f0e5873c";
+    let expected = "b38166e41a01a0c86b99c66a34f29f07805364e9d414bc54939ece6b111b4b4e";
+    let undirected = false;
+    let def = rocket_helpers::create_test_relation_def(undirected, "def_relation_hash");
 
     let rel = RelationBase {
-        definition: GenericHash::from_hex(
-            "1111111111111111111111111111111111111111111111111111111111111111",
-        ),
+        definition: GenericHash::from_hex(&def),
         first_object: GenericHash::from_hex(
             "2222222222222222222222222222222222222222222222222222222222222222",
         ),
@@ -125,9 +126,7 @@ fn relation_hash() {
     assert_eq!(expected, rel.hash().unwrap().to_string());
 
     let rel2 = RelationBase {
-        definition: GenericHash::from_hex(
-            "1111111111111111111111111111111111111111111111111111111111111111",
-        ),
+        definition: GenericHash::from_hex(&def),
         first_object: GenericHash::from_hex(
             "3333333333333333333333333333333333333333333333333333333333333333",
         ),
@@ -141,12 +140,12 @@ fn relation_hash() {
 
 #[test]
 fn relation_hash_conversion() {
-    let expected = "03a73b0774eaa16a75930737fc4c317da50bd9769bd983bea89c23c6f0e5873c";
+    let expected = "f747d1f8a38c9023715786fc6440f12fb59b4d47fc6d6ecf6b6ba557a58a99a7";
+    let undirected = false;
+    let def = rocket_helpers::create_test_relation_def(undirected, "def_relation_hash_conversion");
 
     let rel = RelationBase {
-        definition: GenericHash::from_hex(
-            "1111111111111111111111111111111111111111111111111111111111111111",
-        ),
+        definition: GenericHash::from_hex(&def),
         first_object: GenericHash::from_hex(
             "2222222222222222222222222222222222222222222222222222222222222222",
         ),

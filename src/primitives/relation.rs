@@ -1,5 +1,6 @@
 use crypto::hash;
 use crypto::hash::GenericHash;
+use database::object_queries::get_disposable;
 use database::relation::DatabaseRelation;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -22,8 +23,18 @@ impl RelationBase {
 
         let mut obj_vec: Vec<&str> = vec![obj1, obj2];
 
-        // make final hash independent of the order of first and second objects
-        obj_vec.sort();
+        // check if obiect is directed
+        get_disposable(&self.definition)
+            .map(|object| {
+                object.directed().map(|directed| {
+                    // if not directed relation
+                    // make final hash independent of the order of first and second objects
+                    if !directed {
+                        obj_vec.sort();
+                    }
+                });
+            })
+            .unwrap();
 
         hasher.update(&self.definition.to_vec())?;
         hasher.update(obj_vec[0].as_bytes())?;

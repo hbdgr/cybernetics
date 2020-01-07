@@ -3,4 +3,5 @@ use common::cybernetics::primitives::header;
 use common::cybernetics::primitives::object;
 
 pub mod object_helpers;
+pub mod relation_helpers;
 pub mod rocket_helpers;

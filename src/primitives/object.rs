@@ -1,6 +1,6 @@
 use crypto::hash::GenericHash;
 use database::object::DatabaseObject;
-use primitives::header::Header;
+use primitives::header::{Header, ObjectType};
 use serde_json::json;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,5 +44,14 @@ impl Object {
             Err(err) => return Err(err.to_string()),
         };
         Ok(Object::from_content(content).unwrap())
+    }
+
+    // for relation definition object returns its directed property
+    pub fn directed(&self) -> Option<bool> {
+        let object_type = &self.content.header.object_type;
+        match object_type {
+            ObjectType::RelationDefinition { directed } => Some(*directed),
+            _ => None,
+        }
     }
 }

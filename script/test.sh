@@ -12,6 +12,7 @@ DATABASE_NAME="cybernetics_test"
 export DATABASE_URL="postgres://cyber:${DATABASE_PASSWORD}@localhost/${DATABASE_NAME}"
 
 arg=$1
+param=$2
 case $arg in
 	"setup")
 		diesel setup
@@ -22,7 +23,7 @@ case $arg in
 		export ROCKET_PORT=8000
 
 		diesel database reset
-		cargo test
+		cargo test "${param}"
 		;;
 	*)
 		printf "Bad option.\n Available options: setup, run\n";

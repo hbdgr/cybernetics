@@ -2,11 +2,11 @@ extern crate cybernetics;
 extern crate rocket;
 
 use self::cybernetics::server;
+use super::header::ObjectType;
 use common::object_helpers;
+use common::relation_helpers;
 use common::rocket_helpers::rocket::http::{ContentType, Status};
 use common::rocket_helpers::rocket::local::Client;
-// use cybernetics::primitives::header::ObjectType;
-use super::header::ObjectType;
 use std::option;
 
 #[allow(dead_code)]
@@ -82,4 +82,13 @@ pub fn create_test_relation_expect_status(
 
     assert_eq!(response.status(), status);
     response.body_string()
+}
+
+#[allow(dead_code)]
+pub fn create_test_relation_body(directed: bool, postfix: &str) -> String {
+    let def = create_test_relation_def(directed, &format!("object def {}", postfix));
+    let obj_first = create_test_element(&format!("first object {}", postfix));
+    let obj_second = create_test_element(&format!("second object {}", postfix));
+
+    relation_helpers::relation_body(&def, &obj_first, &obj_second)
 }
