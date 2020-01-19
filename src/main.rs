@@ -36,6 +36,7 @@ mod primitives;
 mod server;
 mod ws_web_server;
 
+use database::connection_pool;
 use std::thread;
 use std::time::Duration;
 
@@ -45,8 +46,11 @@ fn main() {
     dotenv().ok();
     crypto::init();
 
+    // create connection pool to database
+    let db_pool = connection_pool::init_pool();
+
     // run rest server!
-    let rest_thread = thread::spawn(move || server::router::launch_routes());
+    let rest_thread = thread::spawn(move || server::router::launch_routes(db_pool.clone()));
     println!("REST API created");
 
     // run ws server!

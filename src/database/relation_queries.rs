@@ -1,5 +1,5 @@
 use crypto::hash::GenericHash;
-use primitives::relation::{Relation, RelationBase};
+use primitives::relation::Relation;
 
 use database::relation::DatabaseRelation;
 use database::schema::relations;
@@ -12,31 +12,38 @@ pub fn all(connection: &PgConnection) -> QueryResult<Vec<Relation>> {
     let mut vec = Vec::new();
     for rel in return_vec {
         let hash = rel.hash.clone();
-        let _ = Relation::from_database_relation(rel) // ignore bad formated records
+        let _ = rel
+            .to_relation(connection) // ignore bad formated records
             .map(|r| vec.push(r))
             .map_err(|e| {
-                error!("[query - all]: Bad formated relation [{:?}]: {:?}", hash, e);
+                let hex_string = GenericHash::from_bytes(&hash).to_string();
+                error!(
+                    "[query - all]: Bad formated relation [{}]: {:?}",
+                    hex_string, e
+                );
             });
     }
     Ok(vec)
 }
 
 pub fn get(hash: GenericHash, connection: &PgConnection) -> QueryResult<Relation> {
-    let return_relation = relations::table
+    let return_db_rel = relations::table
         .find(&hash.to_vec())
         .get_result::<DatabaseRelation>(connection)?;
 
-    let relation = Relation::from_database_relation(return_relation).unwrap();
+    let relation = return_db_rel.to_relation(connection)?;
     Ok(relation)
 }
 
-pub fn insert(relation_base: RelationBase, connection: &PgConnection) -> QueryResult<Relation> {
-    let database_rel = DatabaseRelation::from_relation_base(relation_base);
-    let return_relation = diesel::insert_into(relations::table)
-        .values(&database_rel)
-        .get_result(connection)?;
+pub fn insert(
+    database_relation: DatabaseRelation,
+    connection: &PgConnection,
+) -> QueryResult<Relation> {
+    let return_db_rel = diesel::insert_into(relations::table)
+        .values(&database_relation)
+        .get_result::<DatabaseRelation>(connection)?;
 
-    let relation = Relation::from_database_relation(return_relation).unwrap();
+    let relation = return_db_rel.to_relation(connection)?;
     Ok(relation)
 }
 

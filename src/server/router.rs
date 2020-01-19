@@ -1,4 +1,4 @@
-use database::connection_pool;
+use database::connection_pool::Pool;
 use diesel::result::Error;
 use server::handle_objects;
 use server::handle_relations;
@@ -42,9 +42,9 @@ fn cors_options() -> rocket_cors::Cors {
     }
 }
 
-pub fn create_routes() -> Rocket {
+pub fn create_routes(db_pool: Pool) -> Rocket {
     rocket::ignite()
-        .manage(connection_pool::init_pool())
+        .manage(db_pool)
         .manage(cors_options())
         .mount("/", rocket_cors::catch_all_options_routes())
         .mount("/", routes![handle_objects::auth_post])
@@ -79,8 +79,8 @@ pub fn create_routes() -> Rocket {
         }))
 }
 
-pub fn launch_routes() {
-    create_routes().launch();
+pub fn launch_routes(db_pool: Pool) {
+    create_routes(db_pool).launch();
 }
 
 pub fn error_status(error: Error) -> Status {

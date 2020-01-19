@@ -1,6 +1,7 @@
 extern crate cybernetics;
 extern crate rocket;
 
+use self::cybernetics::database;
 use self::cybernetics::server;
 use super::header::ObjectType;
 use common::object_helpers;
@@ -11,7 +12,8 @@ use std::option;
 
 #[allow(dead_code)]
 pub fn rocket_client() -> Client {
-    Client::new(server::router::create_routes()).expect("valid rocket instance")
+    let db_pool = database::connection_pool::init_pool();
+    Client::new(server::router::create_routes(db_pool)).expect("valid rocket instance")
 }
 
 // extract id from response body

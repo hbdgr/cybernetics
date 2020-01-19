@@ -14,6 +14,7 @@ fn create_relation() {
     let obj_second_hash = rocket_helpers::create_test_element("second object");
 
     let rel_body = relation_helpers::relation_body(&def_hash, &obj_first_hash, &obj_second_hash);
+    println!("rol_body: {}", rel_body);
 
     let client = rocket_helpers::rocket_client();
     let mut response = client
@@ -28,15 +29,15 @@ fn create_relation() {
         serde_json::from_str(&response.body_string().unwrap()).unwrap();
 
     assert_eq!(
-        relation_helpers::json_relation_definition(json_response.clone()),
+        relation_helpers::json_relation_definition_hash(json_response.clone()),
         def_hash
     );
     assert_eq!(
-        relation_helpers::json_relation_first_obj(json_response.clone()),
+        relation_helpers::json_relation_first_obj_hash(json_response.clone()),
         obj_first_hash
     );
     assert_eq!(
-        relation_helpers::json_relation_second_obj(json_response),
+        relation_helpers::json_relation_second_obj_hash(json_response),
         obj_second_hash
     );
 }
@@ -89,11 +90,11 @@ fn get_all_relations() {
     );
 
     assert!(
-        relation_helpers::json_relation_base(response_array[0].clone())
-            .get("definition")
+        relation_helpers::json_relation_definition(response_array[0].clone())
+            .get("hash")
             .unwrap()
             .is_string(),
-        "relation definition should be a hex string"
+        "relation definition hash should be a hex string"
     );
 }
 
@@ -133,20 +134,20 @@ fn put_relation() {
     );
 
     assert_ne!(
-        relation_helpers::json_relation_definition(json_response.clone()),
+        relation_helpers::json_relation_definition_hash(json_response.clone()),
         def_hash
     );
 
     assert_eq!(
-        relation_helpers::json_relation_definition(json_response.clone()),
+        relation_helpers::json_relation_definition_hash(json_response.clone()),
         new_def_hash
     );
     assert_eq!(
-        relation_helpers::json_relation_first_obj(json_response.clone()),
+        relation_helpers::json_relation_first_obj_hash(json_response.clone()),
         obj_first_hash
     );
     assert_eq!(
-        relation_helpers::json_relation_second_obj(json_response),
+        relation_helpers::json_relation_second_obj_hash(json_response),
         obj_second_hash
     );
 }

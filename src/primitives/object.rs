@@ -22,7 +22,7 @@ impl Content {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Object {
     pub hash: GenericHash,
     pub content: Content,
@@ -53,5 +53,10 @@ impl Object {
             ObjectType::RelationDefinition { directed } => Some(*directed),
             _ => None,
         }
+    }
+
+    pub fn raw_hash(&self) -> Vec<u8> {
+        let gen = self.hash.clone();
+        gen.to_vec()
     }
 }

@@ -4,7 +4,6 @@ extern crate serde_json;
 mod common;
 
 use common::object_helpers;
-use common::rocket_helpers;
 use cybernetics::crypto::{hash, msg_block, person, strings};
 use cybernetics::database::object::DatabaseObject;
 use cybernetics::database::relation::DatabaseRelation;
@@ -109,30 +108,24 @@ fn object_hash_conversion() {
 
 #[test]
 fn relation_hash() {
-    let expected = "b38166e41a01a0c86b99c66a34f29f07805364e9d414bc54939ece6b111b4b4e";
+    let expected = "ddf9ac032fce3c93cd100c177c408e7b8e4886eab249a7efcf0484b7c080c5ec";
     let undirected = false;
-    let def = rocket_helpers::create_test_relation_def(undirected, "def_relation_hash");
+    let def = object_helpers::test_relation_definition(undirected, "def_relation_hash");
+    let first_obj = object_helpers::test_primary_element("first_relation_hash");
+    let second_obj = object_helpers::test_primary_element("second_relation_hash");
 
     let rel = RelationBase {
-        definition: GenericHash::from_hex(&def),
-        first_object: GenericHash::from_hex(
-            "2222222222222222222222222222222222222222222222222222222222222222",
-        ),
-        second_object: GenericHash::from_hex(
-            "3333333333333333333333333333333333333333333333333333333333333333",
-        ),
+        definition: def.clone(),
+        first_object: first_obj.clone(),
+        second_object: second_obj.clone(),
     };
 
     assert_eq!(expected, rel.hash().unwrap().to_string());
 
     let rel2 = RelationBase {
-        definition: GenericHash::from_hex(&def),
-        first_object: GenericHash::from_hex(
-            "3333333333333333333333333333333333333333333333333333333333333333",
-        ),
-        second_object: GenericHash::from_hex(
-            "2222222222222222222222222222222222222222222222222222222222222222",
-        ),
+        definition: def,
+        first_object: second_obj,
+        second_object: first_obj,
     };
 
     assert_eq!(expected, rel2.hash().unwrap().to_string());
@@ -140,18 +133,16 @@ fn relation_hash() {
 
 #[test]
 fn relation_hash_conversion() {
-    let expected = "f747d1f8a38c9023715786fc6440f12fb59b4d47fc6d6ecf6b6ba557a58a99a7";
+    let expected = "99171f4784aa1b0f98637cd7c361795f34a2bd65c9f37fa2ef0a3e28174edb09";
     let undirected = false;
-    let def = rocket_helpers::create_test_relation_def(undirected, "def_relation_hash_conversion");
+    let def = object_helpers::test_relation_definition(undirected, "def_relation_hash_conversion");
+    let first_obj = object_helpers::test_primary_element("first_hash_conversion");
+    let second_obj = object_helpers::test_primary_element("second_hash_conversion");
 
     let rel = RelationBase {
-        definition: GenericHash::from_hex(&def),
-        first_object: GenericHash::from_hex(
-            "2222222222222222222222222222222222222222222222222222222222222222",
-        ),
-        second_object: GenericHash::from_hex(
-            "3333333333333333333333333333333333333333333333333333333333333333",
-        ),
+        definition: def,
+        first_object: first_obj,
+        second_object: second_obj,
     };
 
     assert_eq!(expected, rel.hash().unwrap().to_string());

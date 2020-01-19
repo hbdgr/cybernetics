@@ -2,8 +2,9 @@ use database::connection_pool::DbConn;
 use std::env;
 
 use crypto::hash::GenericHash;
+use database::relation::DatabaseRelationBase;
 use database::relation_queries;
-use primitives::relation::{Relation, RelationBase};
+use primitives::relation::Relation;
 
 use rocket::http::Status;
 use rocket::response::status;
@@ -11,13 +12,18 @@ use rocket_contrib::json::Json;
 
 use server::router::error_status;
 
-#[post("/", format = "application/json", data = "<relation_base>")]
+#[post("/", format = "application/json", data = "<database_relation_base>")]
 pub fn post(
-    relation_base: Json<RelationBase>,
+    database_relation_base: Json<DatabaseRelationBase>,
     connection: DbConn,
 ) -> Result<status::Created<Json<Relation>>, Status> {
-    let rb_inner = relation_base.into_inner();
-    let new_hash = rb_inner.hash().unwrap();
+    let drb_inner = database_relation_base.into_inner();
+    let rb_inner = match drb_inner.to_database_relation(&connection) {
+        Ok(rb) => rb,
+        Err(err) => return Err(error_status(err)),
+    };
+
+    let new_hash = rb_inner.hash();
 
     // check if relation already exist
     if let Ok(_) = relation_queries::get(new_hash, &connection) {
@@ -46,14 +52,23 @@ pub fn relation_created(relation: Relation) -> status::Created<Json<Relation>> {
 }
 
 // put object with hash means create new and delete previous
-#[put("/<hash>", format = "application/json", data = "<relation_base>")]
+#[put(
+    "/<hash>",
+    format = "application/json",
+    data = "<database_relation_base>"
+)]
 pub fn put(
     hash: String,
-    relation_base: Json<RelationBase>,
+    database_relation_base: Json<DatabaseRelationBase>,
     connection: DbConn,
 ) -> Result<status::Created<Json<Relation>>, Status> {
-    let rb_inner = relation_base.into_inner();
-    let new_hash = rb_inner.hash().unwrap();
+    let drb_inner = database_relation_base.into_inner();
+    let rb_inner = match drb_inner.to_database_relation(&connection) {
+        Ok(rb) => rb,
+        Err(err) => return Err(error_status(err)),
+    };
+
+    let new_hash = rb_inner.hash();
 
     // check if relation already exist
     if let Ok(_) = relation_queries::get(new_hash, &connection) {

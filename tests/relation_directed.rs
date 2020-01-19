@@ -11,7 +11,9 @@ use rocket::http::{ContentType, Status};
 fn create_directed_relation() {
     let hash_ordered = "a52c893e2101c248c6035c27552687b126a9bde563ac6109e4dc2ac8bb9ca89d";
 
-    let def_hash = rocket_helpers::create_test_relation_def(true, "directed relation definition");
+    let directed = true;
+    let def_hash =
+        rocket_helpers::create_test_relation_def(directed, "directed relation definition");
     let obj_first_hash = rocket_helpers::create_test_element("dir first object");
     let obj_second_hash = rocket_helpers::create_test_element("dir second object");
 
