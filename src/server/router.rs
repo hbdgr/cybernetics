@@ -12,10 +12,11 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 // fn cors<'a>() -> &'a str {
 //     "Hello CORS"
 // }
+const ALLOWED_PORT: u32 = 65320; // 80
+const ALLOWED_ADDR: &str = "http://localhost";
 
 fn cors_options() -> rocket_cors::Cors {
-    let port_allowed = 65320;
-    let host_allowed = format!("http://localhost:{}", port_allowed.to_string());
+    let host_allowed = format!("{}:{}", ALLOWED_ADDR, ALLOWED_PORT.to_string());
     println!("CORS: Host allowed to connect: {}", host_allowed);
 
     let (allowed_origins, failed_origins) = AllowedOrigins::some(&[&host_allowed]);
