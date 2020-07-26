@@ -1,5 +1,3 @@
-## _(VERY EARLY STAGE) (WORK IN PROGRESS)_
-
 # Cybernetics
 Simple graph database with HASH keys and http server.
 
@@ -25,12 +23,16 @@ postgres=# ALTER ROLE username CREATEDB;
 Required variables:
 - ROCKET_ADDRESS
 - ROCKET_PORT
+- ROCKET_CORS_ALLOWED_ADDR
+- ROCKET_CORS_ALLOWED_PORT
 - DATABASE_URL
 
 Example:
 ```
 ROCKET_ADDRESS=localhost
 ROCKET_PORT=8080
+ROCKET_CORS_ALLOWED_ADDR=^http://192.168.0.*
+ROCKET_CORS_ALLOWED_PORT=66666
 DATABASE_URL=postgres://username:password@localhost/cybernetics
 ```
 

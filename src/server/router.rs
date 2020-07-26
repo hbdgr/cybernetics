@@ -1,4 +1,6 @@
 use database::connection_pool::Pool;
+use std::env;
+
 use diesel::result::Error;
 use server::handle_objects;
 use server::handle_relations;
@@ -6,24 +8,26 @@ use server::handle_relations;
 use rocket::fairing::AdHoc;
 use rocket::http::{Method, Status};
 use rocket::Rocket;
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 
 // #[options("/")]
 // fn cors<'a>() -> &'a str {
 //     "Hello CORS"
 // }
-const ALLOWED_PORT: u32 = 65320; // 80
-const ALLOWED_ADDR: &str = "http://localhost";
 
 fn cors_options() -> rocket_cors::Cors {
-    let host_allowed = format!("{}:{}", ALLOWED_ADDR, ALLOWED_PORT.to_string());
-    println!("CORS: Host allowed to connect: {}", host_allowed);
+    let allowed_port =
+        env::var("ROCKET_CORS_ALLOWED_PORT").expect("ROCKET_CORS_ALLOWED_PORT must be set");
+    let allowed_addr =
+        env::var("ROCKET_CORS_ALLOWED_ADDR").expect("ROCKET_CORS_ALLOWED_ADDR must be set");
 
-    let (allowed_origins, failed_origins) = AllowedOrigins::some(&[&host_allowed]);
-    assert!(failed_origins.is_empty());
+    let host_allowed = [format!("{}:{}", allowed_addr, allowed_port.to_string())];
+    println!("CORS: Host allowed to connect: {:?}", host_allowed);
+
+    let allowed_origins = AllowedOrigins::some_regex(&host_allowed);
 
     // You can also deserialize this
-    rocket_cors::Cors {
+    CorsOptions {
         allowed_origins: allowed_origins,
         allowed_methods: vec![
             Method::Get,
@@ -35,12 +39,17 @@ fn cors_options() -> rocket_cors::Cors {
         .into_iter()
         .map(From::from)
         .collect(),
-        allowed_headers: AllowedHeaders::all(),
-        // allowed_methods: vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
-        // allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
+        allowed_headers: AllowedHeaders::some(&[
+            "Authorization",
+            "Accept",
+            "Access-Control-Allow-Origin",
+            "Content-Type",
+        ]),
         allow_credentials: true,
         ..Default::default()
     }
+    .to_cors()
+    .expect("CORS ERROR")
 }
 
 pub fn create_routes(db_pool: Pool) -> Rocket {
