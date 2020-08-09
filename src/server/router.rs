@@ -21,10 +21,15 @@ fn cors_options() -> rocket_cors::Cors {
     let allowed_addr =
         env::var("ROCKET_CORS_ALLOWED_ADDR").expect("ROCKET_CORS_ALLOWED_ADDR must be set");
 
-    let host_allowed = [format!("{}:{}", allowed_addr, allowed_port.to_string())];
-    println!("CORS: Host allowed to connect: {:?}", host_allowed);
+    let host_allowed;
+    if allowed_port == "80" {
+        host_allowed = [format!("{}", allowed_addr)];
+    } else {
+        host_allowed = [format!("{}:{}", allowed_addr, allowed_port.to_string())];
+    }
 
     let allowed_origins = AllowedOrigins::some_regex(&host_allowed);
+    println!("CORS: allowed_origins: {:?}", allowed_origins);
 
     // You can also deserialize this
     CorsOptions {
